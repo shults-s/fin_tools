@@ -9,12 +9,11 @@ Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, 
 - 3-byte signature:
   - fixed bytes 'F', 'T' (financial tools)
   - format version for further migrations
-- `N`, number of entries (max 65 535)
 
-| Bytes |  0  |  1  |    2    | 3..4 |
-|:-----:|:---:|:---:|:-------:|:----:|
-|  Type |  u8 |  u8 |    u8   |  u16 |
-| Field | 'F' | 'T' | Version |   N  |
+| Bytes |  0  |  1  |    2    |
+|:-----:|:---:|:---:|:-------:|
+|  Type |  u8 |  u8 |    u8   |
+| Field | 'F' | 'T' | Version |
 
 ### Entry (transaction)
 
