@@ -1,4 +1,7 @@
 use chrono::NaiveDate;
+use macros::Getters;
+
+pub(crate) const TX_FIELDS_NUM: usize = 4;
 
 /// Represents the type of transaction.
 #[derive(Debug, PartialEq, Eq)]
@@ -8,7 +11,7 @@ pub enum TxKind {
 }
 
 /// Represents the transaction.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Getters)]
 pub struct Tx {
     date: NaiveDate,
     cat: String,
