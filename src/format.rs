@@ -9,6 +9,9 @@ use std::io::{Read, Write};
 mod bin_format;
 mod csv_format;
 mod txt_format;
+mod utils;
+
+const DATE_FORMAT_STR: &str = "%Y-%m-%d";
 
 /// Represents an formats, available for reading & writing transactions.
 pub enum TxFormat {
@@ -19,16 +22,17 @@ pub enum TxFormat {
 
 /// Abstract transaction reader.
 pub trait TxReader {
-    fn read(&self, src: &dyn Read) -> Result<Vec<Tx>, FinToolsError>;
+    fn read(&self, src: &mut dyn Read) -> Result<Vec<Tx>, FinToolsError>;
 }
 
 /// Abstract transaction writer.
 pub trait TxWriter {
-    fn write(&self, dst: &dyn Write) -> Result<(), FinToolsError>;
+    fn write(&self, dst: &mut dyn Write, txs: &Vec<Tx>) -> Result<(), FinToolsError>;
 }
 
 /// Transaction reader factory.
 pub fn get_reader_for(format: TxFormat) -> Box<dyn TxReader> {
+    // feels like overengineering, although...
     match format {
         TxFormat::Bin => Box::new(BinTxReader),
         TxFormat::Csv => Box::new(CsvTxReader),

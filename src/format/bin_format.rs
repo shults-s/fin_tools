@@ -8,14 +8,13 @@ pub(super) struct BinTxWriter;
 const SIG: &[u8; 2] = b"FT";
 
 impl TxReader for BinTxReader {
-    fn read(&self, src: &dyn std::io::Read) -> Result<Vec<Tx>, FinToolsError> {
-        //let txs = Vec::with_capacity(N);
+    fn read(&self, src: &mut dyn std::io::Read) -> Result<Vec<Tx>, FinToolsError> {
         todo!()
     }
 }
 
 impl TxWriter for BinTxWriter {
-    fn write(&self, dst: &dyn std::io::Write) -> Result<(), FinToolsError> {
+    fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
         todo!()
     }
 }
