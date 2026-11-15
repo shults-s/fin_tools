@@ -3,7 +3,6 @@ use crate::format::bin_format::{BinTxReader, BinTxWriter};
 use crate::format::csv_format::{CsvTxReader, CsvTxWriter};
 use crate::format::txt_format::{TxtTxReader, TxtTxWriter};
 use crate::model::Tx;
-
 use std::io::{Read, Write};
 
 mod bin_format;
@@ -11,7 +10,7 @@ mod csv_format;
 mod txt_format;
 mod utils;
 
-const DATE_FORMAT_STR: &str = "%Y-%m-%d";
+const DATE_FMT_STR: &str = "%Y-%m-%d";
 
 /// Represents an formats, available for reading & writing transactions.
 pub enum TxFormat {
@@ -32,7 +31,7 @@ pub trait TxWriter {
 
 /// Transaction reader factory.
 pub fn get_reader_for(format: TxFormat) -> Box<dyn TxReader> {
-    // feels like overengineering, although...
+    // using dynamic dispatching there feels like over-engineering, although...
     match format {
         TxFormat::Bin => Box::new(BinTxReader),
         TxFormat::Csv => Box::new(CsvTxReader),
