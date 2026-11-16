@@ -20,11 +20,14 @@ pub struct Tx {
 impl Tx {
     /// Creates a new transaction.
     /// Panics if args are violate domain constraints:
-    /// - `cat` is not an ASCII string;
+    /// - `cat` is empty or is not an ASCII string;
     /// - `amount` is zero.
     pub fn new(date: NaiveDate, cat: String, kind: TxKind, amount: u64) -> Self {
         if !cat.is_ascii() {
             panic!("Transaction category must be an ASCII string.");
+        }
+        if cat.is_empty() {
+            panic!("Transaction category can't be empty.");
         }
         if amount == 0 {
             panic!("Transaction amount must be positive.");

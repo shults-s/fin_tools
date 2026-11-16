@@ -5,6 +5,7 @@ Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, 
 ## Domain constraints
 
 - all of text data must be ASCII strings, since I don't want to struggle with Unicode Normalization Forms and other pitfalls during subsequent string comparison
+- category len > 0
 - amount > 0
 
 ## Binary data layout
@@ -22,7 +23,7 @@ Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, 
 
 ### Entry (transaction)
 
-All of multi-byte values is Little Endian.
+All of multi-byte values are Little Endian.
 
 - `Date`, number of days from 1970-01-01, 2-bytes enough until mid. of 2149 year.
 - `Kind` of transaction

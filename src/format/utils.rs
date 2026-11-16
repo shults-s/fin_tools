@@ -1,10 +1,24 @@
-use crate::error::FinToolsError;
+use crate::error::{FinToolsError, parsing_err};
 use crate::format::DATE_FMT_STR;
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 
 pub(crate) const TX_FIELDS_NUM: usize = 4;
+
+#[inline]
+fn get_kind_from_str(str: &str) -> Option<TxKind> {
+    match str.to_ascii_lowercase().as_str() {
+        "income" => Some(TxKind::Income),
+        "expence" => Some(TxKind::Expence),
+        _ => None,
+    }
+}
+
+#[inline]
+fn get_str_from_kind(kind: TxKind) -> String {
+    format!("{:?}", kind).to_lowercase()
+}
 
 pub(super) fn write_txs_as_text(
     dst: &mut dyn std::io::Write,
@@ -25,7 +39,7 @@ pub(super) fn write_txs_as_text(
             field_sep,
             tx.get_date().format(DATE_FMT_STR),
             tx.get_cat(),
-            format!("{:?}", tx.get_kind()).to_lowercase(),
+            get_str_from_kind(*tx.get_kind()),
             tx.get_amount()
         )?;
     }
@@ -54,44 +68,53 @@ pub(super) fn read_txs_from_text(
 
         let fields = line.split(field_sep).map(str::trim).collect::<Vec<_>>();
         if fields.len() != TX_FIELDS_NUM {
-            let msg = format!(
-                "Invalid entry format at line {}. Expected {} fields, found {}.",
+            return Err(parsing_err!(
+                "Invalid TX format at line {}. Expected {} fields, found {}.",
                 line_num,
                 TX_FIELDS_NUM,
                 fields.len()
-            );
-            return Err(FinToolsError::ParsingError(msg));
+            ));
         }
 
         let date = NaiveDate::parse_from_str(fields[0], DATE_FMT_STR).map_err(|_| {
-            FinToolsError::ParsingError(format!(
-                "Invalid date format at line {}. Expected format is YYYY-MM-DD.",
+            parsing_err!(
+                "Invalid date '{}' at line {}. Expected format is YYYY-MM-DD.",
+                fields[0],
                 line_num
-            ))
+            )
         })?;
 
         let cat = fields[1].to_ascii_lowercase();
-        if !cat.is_ascii() {
-            let msg = format!(
-                "Invalid category at line {}. Allowed ASCII characters only.",
-                line_num,
-            );
-            return Err(FinToolsError::ParsingError(msg));
+        if !cat.is_ascii() || cat.len() == 0 {
+            return Err(parsing_err!(
+                "Invalid category '{}' at line {}. Expected non empty ASCII string.",
+                cat,
+                line_num
+            ));
         }
 
-        let kind = match fields[2].to_ascii_lowercase().as_str() {
-            "income" => Ok(TxKind::Income),
-            "expence" => Ok(TxKind::Expence),
-            _ => {
-                let msg = format!("Invalid transaction kind at line {}.", line_num);
-                Err(FinToolsError::ParsingError(msg))
-            }
-        }?;
+        let kind = get_kind_from_str(fields[2]).ok_or_else(|| {
+            parsing_err!(
+                "Invalid transaction kind '{}' at line {}.",
+                fields[2],
+                line_num
+            )
+        })?;
 
         let amount = fields[3].parse::<u64>().map_err(|_| {
-            let msg = format!("Invalid amount at line {}. Expected 64-bit uint.", line_num);
-            FinToolsError::ParsingError(msg)
+            parsing_err!(
+                "Invalid amount '{}' at line {}. Expected positive integer.",
+                fields[3],
+                line_num
+            )
         })?;
+        if amount == 0 {
+            return Err(parsing_err!(
+                "Invalid amount '{}' at line {}. Amount must be positive.",
+                amount,
+                line_num
+            ));
+        }
 
         txs.push(Tx::new(date, cat, kind, amount));
     }
