@@ -2,6 +2,11 @@
 
 Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, and Analyzing Data in Rust
 
+## Domain constraints
+
+- all of text data must be ASCII strings, since I don't want to struggle with Unicode Normalization Forms and other pitfalls during subsequent string comparison
+- amount > 0
+
 ## Binary data layout
 
 ### Header
@@ -17,14 +22,16 @@ Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, 
 
 ### Entry (transaction)
 
-- `Date`, number of days from 1970-01-01, 2-bytes enough until mid. of 2149 year
-- `l`, bytes length of `Category`
-- `Category`, name of transaction category
-  - forced ASCII, since I don't want to struggle with Unicode Normalization Forms and other pitfalls during subsequent string comparison
+All of multi-byte values is Little Endian.
+
+- `Date`, number of days from 1970-01-01, 2-bytes enough until mid. of 2149 year.
 - `Kind` of transaction
 - `Amount` of transferred monies
+- `l`, bytes length of `Category`
+- `Category`, name of transaction category, max 255 characters
+  - should be enum also, but I want to demonstrate processing of variable-length data
 
-| Bytes | 0..1 |  2 |   3..l   |  l+1 | l+2..l+10 |
-|:-----:|:----:|:--:|:--------:|:----:|-----------|
-|  Type |  u16 | u8 |   &str   |  u8  | u64       |
-| Field | Date |  l | Category | Kind | Amount    |
+| Bytes | 0..=1 |   2  | 3..=11 | 12 |  13..=l  |
+|:-----:|:-----:|:----:|:------:|:--:|:--------:|
+|  Type |  u16  |  u8  |   u64  | u8 |   &str   |
+| Field |  Date | Kind | Amount |  l | Category |

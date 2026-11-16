@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Data::Struct, DeriveInput, Error, Fields, parse_macro_input};
+use syn::Data::Struct;
+use syn::{DeriveInput, Error, Fields, parse_macro_input};
 
 #[proc_macro_derive(Getters)]
 pub fn derive_getters(input: TokenStream) -> TokenStream {
@@ -12,6 +13,8 @@ pub fn derive_getters(input: TokenStream) -> TokenStream {
             fields
                 .named
                 .iter()
+                // FOR_REVIEWER: I iterate over named fields, therefore,
+                // I consider ident=None as a violation of an invariant.
                 .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
                 .collect()
         } else {

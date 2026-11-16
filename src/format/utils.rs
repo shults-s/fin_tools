@@ -1,8 +1,10 @@
 use crate::error::FinToolsError;
 use crate::format::DATE_FMT_STR;
-use crate::model::{TX_FIELDS_NUM, Tx, TxKind};
+use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
 use std::io::{BufRead, BufReader, BufWriter, Write};
+
+pub(crate) const TX_FIELDS_NUM: usize = 4;
 
 pub(super) fn write_txs_as_text(
     dst: &mut dyn std::io::Write,

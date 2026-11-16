@@ -1,10 +1,8 @@
 use chrono::NaiveDate;
 use macros::Getters;
 
-pub(crate) const TX_FIELDS_NUM: usize = 4;
-
 /// Represents the type of transaction.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TxKind {
     Income,
     Expence,
@@ -20,10 +18,16 @@ pub struct Tx {
 }
 
 impl Tx {
-    /// Creates a new transaction. Panics if `cat` is not an ASCII string.
+    /// Creates a new transaction.
+    /// Panics if args are violate domain constraints:
+    /// - `cat` is not an ASCII string;
+    /// - `amount` is zero.
     pub fn new(date: NaiveDate, cat: String, kind: TxKind, amount: u64) -> Self {
         if !cat.is_ascii() {
             panic!("Transaction category must be an ASCII string.");
+        }
+        if amount == 0 {
+            panic!("Transaction amount must be positive.");
         }
         Self {
             date,
