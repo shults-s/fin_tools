@@ -11,11 +11,12 @@ mod csv_format;
 mod txt_format;
 mod utils;
 
-// FOR_REVIEWER: Format constraints, not a domain. None only if date is out of range.
-const MAX_DATE: NaiveDate = NaiveDate::from_epoch_days(u16::MAX as i32).unwrap();
-const MIN_DATE: NaiveDate = NaiveDate::from_epoch_days(0).unwrap();
+// FOR_REVIEWER: `None` only if date is out of range which is violation of an invariant.
+type Days = u16;
+const MAX_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MAX as i32).unwrap();
+const MIN_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MIN as i32).unwrap();
 const DATE_FMT_STR: &str = "%Y-%m-%d";
-const CAT_MAX_SIZE: usize = 255;
+const CAT_MAX_SIZE: usize = u8::MAX as usize;
 
 /// Represents an formats, available for reading & writing transactions.
 pub enum TxFormat {
@@ -37,6 +38,7 @@ pub trait TxWriter {
 /// Transaction reader factory.
 pub fn get_reader(format: TxFormat) -> Box<dyn TxReader> {
     // FOR_REVIEWER: using dynamic dispatching there feels like over-engineering, although...
+    // I would appreciate some advice.
     match format {
         TxFormat::Bin => Box::new(BinTxReader),
         TxFormat::Csv => Box::new(CsvTxReader),

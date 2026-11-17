@@ -13,6 +13,7 @@ impl Display for FinToolsError {
             // FOR_REVIEWER: I don't like this. So, is it reading or writing?
             // Are there ways to specify this in a more granular fashion without losing
             // ability to use operator "?" via implementing From<T>?
+            // I would appreciate some advice.
             FinToolsError::IoError(_) => write!(f, "Failed to read/write transactions."),
             FinToolsError::ParsingError(reason) => {
                 write!(f, "Failed to parse transactions. {reason}")

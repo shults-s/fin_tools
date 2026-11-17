@@ -1,5 +1,5 @@
 use crate::error::{FinToolsError, parsing_err, serializing_err};
-use crate::format::{CAT_MAX_SIZE, MAX_DATE, MIN_DATE, TxReader, TxWriter};
+use crate::format::{CAT_MAX_SIZE, Days, MAX_DATE, MIN_DATE, TxReader, TxWriter};
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
 use std::io::{BufReader, BufWriter, Read, Write};
@@ -38,6 +38,8 @@ fn get_kind_from_byte(byte: u8) -> Option<TxKind> {
 
 #[inline]
 fn get_byte_from_kind(kind: TxKind) -> u8 {
+    // FOR_REVIEWER: For prod should be used explicit match kind => u8 instead of
+    // relying on order of values in enum, but I cover this in tests for now.
     kind as u8
 }
 
@@ -50,7 +52,7 @@ impl TxReader for BinTxReader {
         let mut sig = [0u8; SIG_SIZE];
         reader.read_exact(&mut sig)?;
 
-        if !sig[..2].eq(FIXED_SIG_BYTES) {
+        if sig[..2].as_ref() != FIXED_SIG_BYTES {
             return Err(parsing_err!("Bad signature bytes."));
         }
 
@@ -77,11 +79,11 @@ impl TxReader for BinTxReader {
 
             // FOR_REVIEWER: Here and throughout, inability to read values from a slice
             // is considered as a violation of an invariant (fucked idxs).
-            let days = u16::from_le_bytes(entry_buf[..=1].try_into().unwrap());
+            let days = Days::from_le_bytes(entry_buf[..=1].try_into().unwrap());
             let date = NaiveDate::from_epoch_days(days as i32).ok_or_else(|| {
                 parsing_err!(
                     "Date '{}' is out of range 0..={} for TX with offset {}.",
-                    u16::MAX,
+                    Days::MAX,
                     days,
                     offset
                 )

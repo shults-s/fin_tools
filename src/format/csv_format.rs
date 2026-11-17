@@ -16,7 +16,6 @@ impl TxReader for CsvTxReader {
 
 impl TxWriter for CsvTxWriter {
     fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
-        let header = ["date", "category", "kind", "amount"].join(FIELD_SEP);
-        write_txs_as_text(dst, txs, Some(header), FIELD_SEP)
+        write_txs_as_text(dst, txs, true, FIELD_SEP)
     }
 }
