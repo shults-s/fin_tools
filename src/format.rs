@@ -25,6 +25,16 @@ pub enum TxFormat {
     Txt,
 }
 
+/// Determines TX format from its short name.
+pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
+    match str.as_ref() {
+        "ftx" => Some(TxFormat::Bin),
+        "csv" => Some(TxFormat::Csv),
+        "txt" => Some(TxFormat::Txt),
+        _ => None,
+    }
+}
+
 /// Abstract transaction reader.
 pub trait TxReader {
     fn read(&self, src: &mut dyn Read) -> Result<Vec<Tx>, FinToolsError>;

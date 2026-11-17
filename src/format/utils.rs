@@ -24,7 +24,7 @@ fn get_kind_from_str(str: &str) -> Option<TxKind> {
 
 #[inline]
 fn get_str_from_kind(kind: &TxKind) -> String {
-    format!("{:?}", kind).to_lowercase()
+    format!("{kind}").to_lowercase()
 }
 
 pub(super) fn write_txs_as_text(

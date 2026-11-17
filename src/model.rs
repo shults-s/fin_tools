@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::NaiveDate;
 use macros::Getters;
 
@@ -15,6 +17,22 @@ pub struct Tx {
     cat: String,
     kind: TxKind,
     amount: u64,
+}
+
+#[derive(Debug)]
+pub enum TxsCmpRes {
+    Equals,
+    CountMismatch,
+    Different(usize, String),
+}
+
+impl Display for TxKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Income => write!(f, "Income"),
+            Self::Expence => write!(f, "Expence"),
+        }
+    }
 }
 
 impl Tx {
@@ -38,5 +56,38 @@ impl Tx {
             kind,
             amount,
         }
+    }
+}
+
+pub fn compare_txs(txs1: &Vec<Tx>, txs2: &Vec<Tx>) -> TxsCmpRes {
+    if txs1.len() != txs2.len() {
+        return TxsCmpRes::CountMismatch;
+    }
+
+    if let Some(first_diff) = txs1
+        .iter()
+        .zip(txs2)
+        .enumerate()
+        .find(|(_, (tx1, tx2))| tx1 != tx2)
+    {
+        let (idx, (tx1, tx2)) = first_diff;
+        let reason = find_diff_field(tx1, tx2);
+        return TxsCmpRes::Different(idx, reason);
+    }
+
+    TxsCmpRes::Equals
+}
+
+fn find_diff_field(tx1: &Tx, tx2: &Tx) -> String {
+    if tx1.get_date() != tx2.get_date() {
+        format!("Date: {} != {}", tx1.get_date(), tx2.get_date())
+    } else if tx1.get_cat() != tx2.get_cat() {
+        format!("Category: {} != {}", tx1.get_cat(), tx2.get_cat())
+    } else if tx1.get_kind() != tx2.get_kind() {
+        format!("Kind: {} != {}", tx1.get_kind(), tx2.get_kind())
+    } else if tx1.get_amount() != tx2.get_amount() {
+        format!("Amount: {} != {}", tx1.get_amount(), tx2.get_amount())
+    } else {
+        panic!("Value of the unknown field differs.");
     }
 }
