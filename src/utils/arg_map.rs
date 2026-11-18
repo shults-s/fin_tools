@@ -12,7 +12,7 @@ impl ArgMap {
     pub fn from(args: impl IntoIterator<Item: AsRef<str>>) -> Result<Self, String> {
         let mut arg_map = HashMap::new();
 
-        for arg in args {
+        for arg in args.into_iter().skip(1) {
             let arg = arg.as_ref();
             if let Some((key, val)) = arg.split_once('=') {
                 Self::try_add_arg(

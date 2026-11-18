@@ -9,7 +9,7 @@ Format will inferred from file extension: ftx, csv or txt."#;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args();
-    if args.len() != 2 {
+    if args.len() != 3 {
         println!("{USAGE_STR}");
         return Ok(());
     }

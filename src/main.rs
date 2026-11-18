@@ -17,7 +17,7 @@ When a file path is provided, format will inferred from file extension: ftx, csv
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args();
-    if args.len() != 2 {
+    if args.len() != 3 {
         println!("{USAGE_STR}");
         return Ok(());
     }
@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }?;
 
     if let Some(dst_path) = arg_map.get_arg("dst") {
-        let path = get_path_checked(dst_path)?;
+        let path = std::path::Path::new(dst_path);
         let format = get_format_from_path(path)?;
         let mut dst = File::create(path)?;
         get_writer(format).write(&mut dst, &txs)?;
