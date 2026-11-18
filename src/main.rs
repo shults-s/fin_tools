@@ -1,13 +1,11 @@
-mod arg_utils;
 mod error;
 mod format;
-mod fs_utils;
 mod model;
+mod utils;
 
-use crate::arg_utils::{collect_args, get_required_arg_val};
 use crate::format::get_reader;
-use crate::fs_utils::{get_format_from_path, get_path};
 use crate::model::{TxsCmpRes, compare_txs};
+use crate::utils::{collect_args, get_format_from_path, get_path, get_required_arg_val};
 use std::error::Error;
 use std::fs::File;
 

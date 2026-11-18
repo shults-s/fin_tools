@@ -1,7 +1,6 @@
-use fin_tools::arg_utils::{collect_args, get_required_arg_val};
 use fin_tools::format::get_reader;
-use fin_tools::fs_utils::{get_format_from_path, get_path};
 use fin_tools::model::{TxsCmpRes, compare_txs};
+use fin_tools::utils::{collect_args, get_format_from_path, get_path, get_required_arg_val};
 use std::error::Error;
 use std::fs::File;
 
