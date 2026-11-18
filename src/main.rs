@@ -5,7 +5,7 @@ mod utils;
 
 use crate::format::get_reader;
 use crate::model::{TxsCmpRes, compare_txs};
-use crate::utils::{collect_args, get_format_from_path, get_path, get_required_arg_val};
+use crate::utils::{ArgMap, get_format_from_path, get_path};
 use std::error::Error;
 use std::fs::File;
 
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    let arg_map = collect_args(args)?;
+    let arg_map = ArgMap::from(args)?;
 
     Ok(())
 }
