@@ -8,9 +8,11 @@ const COLUMNS_NUM: usize = 4;
 const DEFAULT_COLUMNS: [&str; COLUMNS_NUM] = ["date", "category", "kind", "amount"];
 
 #[inline]
-// fn get_column_idx(col_name: &str, columns: impl IntoIterator<Item: AsRef<str>>) -> Option<usize> {
-fn get_column_idx(col_name: &str, columns: &[impl AsRef<str>]) -> Option<usize> {
-    columns.into_iter().position(|col| col.as_ref() == col_name)
+fn get_column_idx(col_name: &str, columns: &[impl AsRef<str>]) -> Result<usize, FinToolsError> {
+    columns
+        .into_iter()
+        .position(|col| col.as_ref() == col_name)
+        .ok_or_else(|| parsing_err!("Column '{}' not found.", col_name))
 }
 
 #[inline]
@@ -80,14 +82,10 @@ pub(super) fn read_txs_from_text(
             .collect::<Vec<String>>()
     };
 
-    let date_idx =
-        get_column_idx("date", &columns).ok_or_else(|| parsing_err!("Column 'date' not found."))?;
-    let cat_idx = get_column_idx("category", &columns)
-        .ok_or_else(|| parsing_err!("Column 'category' not found."))?;
-    let kind_idx =
-        get_column_idx("kind", &columns).ok_or_else(|| parsing_err!("Column 'kind' not found."))?;
-    let amount_idx = get_column_idx("amount", &columns)
-        .ok_or_else(|| parsing_err!("Column 'amount' not found."))?;
+    let date_idx = get_column_idx("date", &columns)?;
+    let cat_idx = get_column_idx("category", &columns)?;
+    let kind_idx = get_column_idx("kind", &columns)?;
+    let amount_idx = get_column_idx("amount", &columns)?;
 
     let mut line_num = if has_header { 1 } else { 0 };
     for line in lines {
@@ -101,7 +99,7 @@ pub(super) fn read_txs_from_text(
         let fields = line.split(field_sep).map(str::trim).collect::<Vec<_>>();
         if fields.len() != COLUMNS_NUM {
             return Err(parsing_err!(
-                "Invalid TX format at line {}. Expected {} fields, found {}.",
+                "Invalid transaction format at line {}. Expected {} fields, found {}.",
                 line_num,
                 COLUMNS_NUM,
                 fields.len()
@@ -110,20 +108,11 @@ pub(super) fn read_txs_from_text(
 
         let date = NaiveDate::parse_from_str(fields[date_idx], DATE_FMT_STR).map_err(|_| {
             parsing_err!(
-                "Invalid date '{}' at line {}. Expected format is YYYY-MM-DD.",
+                "Invalid transaction date '{}' at line {}. Expected format is YYYY-MM-DD.",
                 fields[date_idx],
                 line_num
             )
         })?;
-
-        let cat = fields[cat_idx].to_string();
-        if !cat.is_ascii() || cat.len() == 0 {
-            return Err(parsing_err!(
-                "Invalid category '{}' at line {}. Expected non empty ASCII text.",
-                cat,
-                line_num
-            ));
-        }
 
         let kind = get_kind_from_str(fields[kind_idx]).ok_or_else(|| {
             parsing_err!(
@@ -135,15 +124,24 @@ pub(super) fn read_txs_from_text(
 
         let amount = fields[amount_idx].parse::<u64>().map_err(|_| {
             parsing_err!(
-                "Invalid amount '{}' at line {}. Expected positive integer.",
+                "Invalid transaction amount '{}' at line {}. Expected positive integer.",
                 fields[amount_idx],
                 line_num
             )
         })?;
         if amount == 0 {
             return Err(parsing_err!(
-                "Invalid amount '{}' at line {}. Value must be a positive integer.",
+                "Invalid transaction amount '{}' at line {}. Value must not be zero.",
                 amount,
+                line_num
+            ));
+        }
+
+        let cat = fields[cat_idx].to_string();
+        if !cat.is_ascii() || cat.len() == 0 {
+            return Err(parsing_err!(
+                "Invalid transaction category '{}' at line {}. Expected non empty ASCII string.",
+                cat,
                 line_num
             ));
         }

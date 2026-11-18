@@ -4,7 +4,7 @@ pub type ArgKey = String;
 pub type ArgVal = Option<String>;
 pub type ArgMap = HashMap<ArgKey, ArgVal>;
 
-fn try_collect_arg(key: String, val: Option<String>, arg_map: &mut ArgMap) -> Result<(), String> {
+fn try_add_arg(key: String, val: Option<String>, arg_map: &mut ArgMap) -> Result<(), String> {
     if !key.starts_with("--") {
         return Err(format!(
             "Invalid arg '{}'. Any arg must starts with double hyphen",
@@ -21,21 +21,27 @@ fn try_collect_arg(key: String, val: Option<String>, arg_map: &mut ArgMap) -> Re
     }
 }
 
+/// Parses a sequence of command-line arguments into a dictionary.
 pub fn collect_args(args: impl IntoIterator<Item: AsRef<str>>) -> Result<ArgMap, String> {
     let mut parsed_args = HashMap::new();
 
     for arg in args {
         let arg = arg.as_ref();
         if let Some((key, val)) = arg.split_once('=') {
-            try_collect_arg(key.to_ascii_lowercase(), Some(val.into()), &mut parsed_args)?;
+            try_add_arg(
+                key.to_ascii_lowercase(),
+                Some(val.trim_matches('"').into()),
+                &mut parsed_args,
+            )?;
         } else {
-            try_collect_arg(arg.to_ascii_lowercase(), None, &mut parsed_args)?;
+            try_add_arg(arg.to_ascii_lowercase(), None, &mut parsed_args)?;
         }
     }
 
     Ok(parsed_args)
 }
 
+/// Returns a value of required arg from `ArgMap`.
 pub fn get_required_arg_val<'a>(key: &str, arg_map: &'a ArgMap) -> Result<&'a String, String> {
     let Some(val) = arg_map
         .get(key)

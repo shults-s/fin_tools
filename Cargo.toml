@@ -3,6 +3,10 @@ name = "fin_tools"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "converter"
+path = "src/main.rs"
+
 [dependencies]
 macros = { path = "macros" }
 chrono = "0.4.45"

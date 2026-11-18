@@ -15,7 +15,7 @@ const SIG_SIZE: usize = 3;
 const FIXED_SIG_BYTES: &[u8; 2] = b"FT";
 const VERSION: u8 = 1;
 
-// | Bytes | 0..=1 |   2  | 3..=11 | 12 |  13..=l  |
+// | Bytes | 0..=1 |   2  | 3..=10 | 11 |   13..l  |
 // |:-----:|:-----:|:----:|:------:|:--:|:--------:|
 // |  Type |  u16  |  u8  |   u64  | u8 |   &str   |
 // | Field |  Date | Kind | Amount |  l | Category |
@@ -53,12 +53,12 @@ impl TxReader for BinTxReader {
         reader.read_exact(&mut sig)?;
 
         if sig[..2].as_ref() != FIXED_SIG_BYTES {
-            return Err(parsing_err!("Bad signature bytes."));
+            return Err(parsing_err!("Bad binary format signature bytes."));
         }
 
         if sig[2] != VERSION {
             return Err(parsing_err!(
-                "Unsupported version. Expected <= {}, found {}.",
+                "Unsupported binary format version. Expected <= {}, found {}.",
                 VERSION,
                 sig[2]
             ));
@@ -82,10 +82,10 @@ impl TxReader for BinTxReader {
             let days = Days::from_le_bytes(entry_buf[..=1].try_into().unwrap());
             let date = NaiveDate::from_epoch_days(days as i32).ok_or_else(|| {
                 parsing_err!(
-                    "Date '{}' is out of range 0..={} for TX with offset {}.",
-                    Days::MAX,
+                    "Invalid transaction date '{}' for TX with offset {}. Value is out of range 0..={}.",
                     days,
-                    offset
+                    offset,
+                    Days::MAX
                 )
             })?;
 
@@ -97,22 +97,20 @@ impl TxReader for BinTxReader {
                 )
             })?;
 
-            let amount = u64::from_le_bytes(entry_buf[3..=11].try_into().unwrap());
+            let amount = u64::from_le_bytes(entry_buf[3..=10].try_into().unwrap());
             if amount == 0 {
                 return Err(parsing_err!(
-                    "Invalid amount '{}' for TX with offset {}. Amount must be positive.",
+                    "Invalid transaction amount '{}' for TX with offset {}. Value must not be zero.",
                     amount,
                     offset,
                 ));
             }
 
-            let cat_len = entry_buf[12] as usize;
-            if cat_len == 0 || cat_len > CAT_MAX_SIZE {
+            let cat_len = entry_buf[11] as usize;
+            if cat_len == 0 {
                 return Err(parsing_err!(
-                    "Invalid category len '{}' for TX with offset {}. Length must be in 1..={}.",
-                    cat_len,
+                    "Invalid transaction category len for TX with offset {}. Value must not be zero.",
                     offset,
-                    CAT_MAX_SIZE
                 ));
             }
 
@@ -120,7 +118,7 @@ impl TxReader for BinTxReader {
             let cat = String::from_utf8_lossy(&cat_buf[..cat_len]).to_string();
             if !cat.is_ascii() {
                 return Err(parsing_err!(
-                    "Invalid category '{}' for TX with offset {}. Allowed ASCII characters only.",
+                    "Invalid transaction category '{}' for TX with offset {}. Expected ASCII string.",
                     cat,
                     offset
                 ));

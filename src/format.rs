@@ -11,21 +11,21 @@ mod csv_format;
 mod txt_format;
 mod utils;
 
-// FOR_REVIEWER: `None` only if date is out of range which is violation of an invariant.
+// FOR_REVIEWER: `None` only when date is out of range which is violation of an invariant.
 type Days = u16;
 const MAX_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MAX as i32).unwrap();
 const MIN_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MIN as i32).unwrap();
 const DATE_FMT_STR: &str = "%Y-%m-%d";
 const CAT_MAX_SIZE: usize = u8::MAX as usize;
 
-/// Represents an formats, available for reading & writing transactions.
+/// Represents formats, available for reading & writing transactions.
 pub enum TxFormat {
     Bin,
     Csv,
     Txt,
 }
 
-/// Determines TX format from its short name.
+/// Determines transaction format from format's short name.
 pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
     match str.as_ref() {
         "ftx" => Some(TxFormat::Bin),
@@ -35,12 +35,12 @@ pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
     }
 }
 
-/// Abstract transaction reader.
+/// Represents abstract transactions reader.
 pub trait TxReader {
     fn read(&self, src: &mut dyn Read) -> Result<Vec<Tx>, FinToolsError>;
 }
 
-/// Abstract transaction writer.
+/// Represents abstract transactions writer.
 pub trait TxWriter {
     fn write(&self, dst: &mut dyn Write, txs: &Vec<Tx>) -> Result<(), FinToolsError>;
 }

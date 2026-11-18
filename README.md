@@ -40,7 +40,7 @@ All of multi-byte values are Little Endian.
 - `Category`, name of transaction category, max length is 255 characters;
   - should be enum also, but I want to demonstrate processing of variable-length data.
 
-| Bytes | 0..=1 |   2  | 3..=11 | 12 |  13..=l  |
+| Bytes | 0..=1 |   2  | 3..=10 | 11 |   13..l  |
 |:-----:|:-----:|:----:|:------:|:--:|:--------:|
 |  Type |  u16  |  u8  |   u64  | u8 |   &str   |
 | Field |  Date | Kind | Amount |  l | Category |

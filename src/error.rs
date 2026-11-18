@@ -1,5 +1,6 @@
 use std::{error::Error, fmt::Display};
 
+/// Represents `fin_tools` library error variants.
 #[derive(Debug)]
 pub enum FinToolsError {
     IoError(std::io::Error),
@@ -10,7 +11,7 @@ pub enum FinToolsError {
 impl Display for FinToolsError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            // FOR_REVIEWER: I don't like this. So, is it reading or writing?
+            // FOR_REVIEWER: I don't like this. So, is it reading or writing failure?
             // Are there ways to specify this in a more granular fashion without losing
             // ability to use operator "?" via implementing From<T>?
             // I would appreciate some advice.
@@ -40,6 +41,7 @@ impl From<std::io::Error> for FinToolsError {
     }
 }
 
+/// Creates instance of `FinToolsError::ParsingError` from literal or format args.
 macro_rules! parsing_err {
     ($msg:literal) => {
         FinToolsError::ParsingError($msg.into())
@@ -50,6 +52,7 @@ macro_rules! parsing_err {
     }
 }
 
+/// Creates instance of `FinToolsError::SerializingError` from literal or format args.
 macro_rules! serializing_err {
     ($msg:literal) => {
         FinToolsError::SerializingError($msg.into())

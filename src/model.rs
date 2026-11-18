@@ -1,16 +1,15 @@
-use std::fmt::Display;
-
 use chrono::NaiveDate;
 use macros::Getters;
+use std::fmt::Display;
 
-/// Represents the type of transaction.
+/// Represents type of transaction.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TxKind {
     Income,
     Expence,
 }
 
-/// Represents the transaction.
+/// Represents transaction.
 #[derive(Debug, PartialEq, Eq, Getters)]
 pub struct Tx {
     date: NaiveDate,
@@ -19,10 +18,18 @@ pub struct Tx {
     amount: u64,
 }
 
+/// Represents result of comparison of two sets of transactions.
 #[derive(Debug)]
 pub enum TxsCmpRes {
+    /// Both lists of transactions completely identical.
     Equals,
+
+    /// Transaction lists have different lengths.
     CountMismatch,
+
+    /// Transactions lists differ.
+    /// - index of first difference,
+    /// - description of first field that differ.
     Different(usize, String),
 }
 
@@ -59,6 +66,8 @@ impl Tx {
     }
 }
 
+/// Compares two lists of transactions.
+/// Size of lists and order of items matter.
 pub fn compare_txs(txs1: &Vec<Tx>, txs2: &Vec<Tx>) -> TxsCmpRes {
     if txs1.len() != txs2.len() {
         return TxsCmpRes::CountMismatch;
@@ -88,6 +97,6 @@ fn find_diff_field(tx1: &Tx, tx2: &Tx) -> String {
     } else if tx1.get_amount() != tx2.get_amount() {
         format!("Amount: {} != {}", tx1.get_amount(), tx2.get_amount())
     } else {
-        panic!("Value of the unknown field differs.");
+        panic!("Values of the unknown field differ.");
     }
 }
