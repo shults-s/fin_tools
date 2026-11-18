@@ -45,7 +45,7 @@ All of text data must be ASCII strings, since I don't want to struggle with Unic
 
 #### Entry (transaction)
 
-All of multi-byte values are Little Endian.
+All of multi-byte integer values are Little Endian.
 
 - `Date`, number of days from Unix Epoch, is within range 1970.01.01..2149.06.06;
 - `Kind` of transaction;
@@ -63,9 +63,9 @@ All of multi-byte values are Little Endian.
 
 - fields separator ",";
 - have header with enumeration of columns, separated with field separator;
-- order of columns arbitary, but all of columns must be present: "date", "kind", "amount", "category".
+- order of columns arbitary, but all of columns must be present: "date", "category", "kind", "amount".
 
 ### Text format
 
 - fields separator ";",
-- due to missing header, order of columns fixed: "date", "kind", "amount", "category".
+- due to missing header, order of columns fixed: "date", "category", "kind", "amount".

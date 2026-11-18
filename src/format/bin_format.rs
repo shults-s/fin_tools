@@ -14,6 +14,7 @@ pub(super) struct BinTxWriter;
 const SIG_SIZE: usize = 3;
 const FIXED_SIG_BYTES: &[u8; 2] = b"FT";
 const VERSION: u8 = 1;
+const SIG_BYTES: &[u8; 3] = &[FIXED_SIG_BYTES[0], FIXED_SIG_BYTES[1], VERSION];
 
 // | Bytes | 0..=1 |   2  | 3..=10 | 11 |   13..l  |
 // |:-----:|:-----:|:----:|:------:|:--:|:--------:|
@@ -53,12 +54,12 @@ impl TxReader for BinTxReader {
         reader.read_exact(&mut sig)?;
 
         if sig[..2].as_ref() != FIXED_SIG_BYTES {
-            return Err(parsing_err!("Bad binary format signature bytes."));
+            return Err(parsing_err!("Bad FTX signature bytes."));
         }
 
         if sig[2] != VERSION {
             return Err(parsing_err!(
-                "Unsupported binary format version. Expected <= {}, found {}.",
+                "Unsupported FTX version. Expected <= {}, found {}.",
                 VERSION,
                 sig[2]
             ));
@@ -137,6 +138,8 @@ impl TxWriter for BinTxWriter {
     fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
         let mut writer = BufWriter::new(dst);
 
+        writer.write(SIG_BYTES)?;
+
         for (idx, tx) in txs.iter().enumerate() {
             let tx_num = idx + 1;
 
@@ -160,8 +163,8 @@ impl TxWriter for BinTxWriter {
             let amount = tx.get_amount().to_le_bytes();
             writer.write(&amount)?;
 
-            let cat = tx.get_cat().as_bytes();
-            let l = cat.len().to_le_bytes();
+            let cat = tx.get_cat();
+            let l = cat.len();
             if cat.len() > CAT_MAX_SIZE {
                 return Err(serializing_err!(
                     "Unable to serialize category longer than {} characters, given {} for TX #{}.",
@@ -170,6 +173,8 @@ impl TxWriter for BinTxWriter {
                     tx_num
                 ));
             }
+            let l = (l as u8).to_le_bytes();
+            let cat = cat.as_bytes();
             writer.write(&l)?;
             writer.write(&cat)?;
         }
