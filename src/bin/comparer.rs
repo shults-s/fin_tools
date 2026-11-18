@@ -1,6 +1,6 @@
 use fin_tools::format::get_reader;
 use fin_tools::model::{TxsCmpRes, compare_txs};
-use fin_tools::utils::{ArgMap, get_format_from_path, get_path};
+use fin_tools::utils::{ArgMap, get_format_from_path, get_path_checked};
 use std::error::Error;
 use std::fs::File;
 
@@ -15,8 +15,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let arg_map = ArgMap::from(args)?;
-    let path1 = arg_map.get_required("txs1").and_then(get_path)?;
-    let path2 = arg_map.get_required("txs2").and_then(get_path)?;
+    let path1 = arg_map.get_required("txs1").and_then(get_path_checked)?;
+    let path2 = arg_map.get_required("txs2").and_then(get_path_checked)?;
 
     let fmt1 = get_format_from_path(path1)?;
     let fmt2 = get_format_from_path(path2)?;

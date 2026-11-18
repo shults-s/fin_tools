@@ -28,8 +28,8 @@ impl ArgMap {
         Ok(Self { arg_map })
     }
 
-    /// Returns a value of required arg from `ArgMap`.
-    pub fn get_required(&self, key: &str) -> Result<&String, String> {
+    /// Returns a value of required arg.
+    pub fn get_required(&self, key: &str) -> Result<&str, String> {
         let Some(val) = self
             .arg_map
             .get(key)
@@ -40,9 +40,25 @@ impl ArgMap {
         Ok(val)
     }
 
-    /// Checks whether an arg-flag with specified key exists.
-    pub fn check_arg(&self, key: &str) -> bool {
-        self.arg_map.contains_key(key)
+    /// Returns a value of arg if arg with specified key exists.
+    pub fn get_arg(&self, key: &str) -> Option<&str> {
+        self.arg_map.get(key)?.as_deref()
+    }
+
+    /// Checks whether an flag-arg with specified key exists. Flag-arg has no value.
+    pub fn check_flag_arg(&self, key: &str) -> bool {
+        let Some(val) = self.arg_map.get(key) else {
+            return false;
+        };
+        val.is_none()
+    }
+
+    /// Checks whether an value-arg with specified key exists.
+    pub fn check_val_arg(&self, key: &str) -> bool {
+        let Some(val) = self.arg_map.get(key) else {
+            return false;
+        };
+        val.is_some()
     }
 
     fn try_add_arg(

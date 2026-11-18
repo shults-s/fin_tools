@@ -2,7 +2,7 @@ use crate::format::{TxFormat, get_format};
 use std::path::Path;
 
 /// Creates `std::path::Path` from path string with checking its accessability.
-pub fn get_path(path: &String) -> Result<&Path, String> {
+pub fn get_path_checked(path: &str) -> Result<&Path, String> {
     let path = Path::new(path);
     if !path.exists() {
         Err(format!(

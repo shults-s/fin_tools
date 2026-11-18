@@ -1,6 +1,20 @@
 # fin_tools
 
-Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, and Analyzing Data in Rust
+Yandex Practicum's Middle Rust Course. Project of 1st Module: Reading, Parsing, and Analyzing Data in Rust.
+
+## FOR_REVIEWER
+
+I've left these markers in all of places in code where:
+
+- I'm unsure or don't know the correct (idiomatic) way to implement things,
+- I intentionally use `.unwrap()` despite of prohibition of using this (as specified in problem statement).
+  - In a few places, where meeting a certain condition would mean violating an invariant, I've opted to call `panic!()`. Yeah, guys from Cloudflare thought that was safe, too.
+
+When reviewing my solution, I ask for the **harshest criticism**. Point out what has been done well (to remember successful decisions), and what is frankly poor. No pain, no gain.
+
+In this task, I've mixed various syntactic constructs, simply to explore different ways of implementing similar things (`&[impl AsRef<str>]` and `impl IntoIterator<Item: AsRef<str>>`, `&str` and `AsRef<str>`, etc.). As a result, the code as a whole might look a bit inconsistent.
+
+And yeah, *London is a capital of Great Britain*, that's why there are very few articles in my comments. I get really mixed up with them.
 
 ## Domain
 
