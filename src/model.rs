@@ -21,13 +21,13 @@ pub struct Tx {
 /// Represents result of comparison of two sets of transactions.
 #[derive(Debug)]
 pub enum TxsCmpRes {
-    /// Both lists of transactions completely identical.
+    /// Transaction lists completely identical.
     Equals,
 
     /// Transaction lists have different lengths.
     CountMismatch,
 
-    /// Transactions lists differ.
+    /// Transaction lists differ.
     /// - index of first difference,
     /// - description of first field that differ.
     Different(usize, String),

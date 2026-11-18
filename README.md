@@ -16,6 +16,26 @@ In this task, I've mixed various syntactic constructs, simply to explore differe
 
 And yeah, *London is a capital of Great Britain*, that's why there are very few articles in my comments. I get really mixed up with them.
 
+## Fast check
+
+```bash
+cargo run --bin converter -- --src="./data/test_nosig.ftx" --dst="./data/tmp.csv"
+```
+
+> Error: ParsingError("Bad FTX signature bytes.")
+
+```bash
+cargo run --bin comparer -- --txs1="./data/test.ftx" --txs2="./data/test_reorder.csv"
+```
+
+> Error: "Transactions numbered 1 differ. Date: 2026-11-15 != 2026-11-16"
+
+```bash
+cargo run --bin comparer -- --txs1="./data/test.csv" --txs2="./data/test.ftx"
+```
+
+> Transaction lists are identical.
+
 ## Domain
 
 Each transaction is defined by:
