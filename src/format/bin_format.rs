@@ -184,6 +184,7 @@ impl TxWriter for BinTxWriter {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::error::FinToolsError;
     use crate::format::{BinTxReader, TxReader};

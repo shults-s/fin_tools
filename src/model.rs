@@ -101,8 +101,8 @@ fn find_diff_field(tx1: &Tx, tx2: &Tx) -> String {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use crate::format::{TxFormat, get_reader, get_writer};
     use crate::model::{Tx, TxKind, TxsCmpRes, compare_txs};
     use chrono::NaiveDate;
 

@@ -20,6 +20,7 @@ impl TxWriter for TxtTxWriter {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::error::FinToolsError;
     use crate::format::{TxReader, TxtTxReader};

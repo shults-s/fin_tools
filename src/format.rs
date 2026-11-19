@@ -68,6 +68,7 @@ pub fn get_writer(format: TxFormat) -> Box<dyn TxWriter> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::format::{TxFormat, get_reader, get_writer};
     use std::io::Cursor;

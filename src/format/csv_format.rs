@@ -20,6 +20,7 @@ impl TxWriter for CsvTxWriter {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::error::FinToolsError;
     use crate::format::{CsvTxReader, TxReader};
