@@ -26,7 +26,7 @@ fn get_kind_from_str(str: &str) -> Option<TxKind> {
 
 #[inline]
 fn get_str_from_kind(kind: &TxKind) -> String {
-    format!("{kind}").to_lowercase()
+    format!("{kind}").to_ascii_lowercase()
 }
 
 pub(super) fn write_txs_as_text(
@@ -74,12 +74,12 @@ pub(super) fn read_txs_from_text(
         header?
             .split(field_sep)
             .map(|column| column.trim().to_ascii_lowercase())
-            .collect::<Vec<String>>()
+            .collect::<Vec<_>>()
     } else {
         DEFAULT_COLUMNS
             .iter()
             .map(|column| column.to_string())
-            .collect::<Vec<String>>()
+            .collect::<Vec<_>>()
     };
 
     let date_idx = get_column_idx("date", &columns)?;
