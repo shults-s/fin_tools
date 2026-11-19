@@ -19,3 +19,47 @@ impl TxWriter for TxtTxWriter {
         write_txs_as_text(dst, txs, false, FIELD_SEP)
     }
 }
+
+mod tests {
+    use crate::error::FinToolsError;
+    use crate::format::{TxReader, TxtTxReader};
+    use crate::model::{Tx, TxKind};
+    use chrono::NaiveDate;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_txt_format_reader_success() {
+        let mut src = Cursor::new(
+            r#"2026-11-16;eat;expence;700
+            2026-11-15;meow;income;1000
+            "#,
+        );
+        let expected = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                1000,
+            ),
+        ];
+        let actual = TxtTxReader.read(&mut src).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_txt_format_reader_wrong_column_order_failure() {
+        let mut src = Cursor::new(
+            r#"2026-11-16;expence;700;eat
+            2026-11-15;income;1000;meow
+            "#,
+        );
+        let actual = TxtTxReader.read(&mut src).unwrap_err();
+        assert!(matches!(actual, FinToolsError::ParsingError(_)));
+    }
+}

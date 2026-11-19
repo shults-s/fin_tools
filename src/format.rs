@@ -67,3 +67,50 @@ pub fn get_writer(format: TxFormat) -> Box<dyn TxWriter> {
         TxFormat::Txt => Box::new(TxtTxWriter),
     }
 }
+
+mod tests {
+    use crate::format::{TxFormat, get_reader, get_writer};
+    use std::io::Cursor;
+
+    #[test]
+    fn test_converter_csv_to_bin_success() {
+        let mut src = Cursor::new(
+            r#"date,kind,amount,category
+            2026-11-15,income,1000,meow
+            2026-11-16,expence,700,eat
+            "#,
+        );
+        let txs = get_reader(TxFormat::Csv).read(&mut src).unwrap();
+
+        let mut dst = Cursor::new(Vec::<u8>::new());
+        get_writer(TxFormat::Bin).write(&mut dst, &txs).unwrap();
+
+        let expected: Vec<u8> = vec![
+            70, 84, 1, 36, 81, 0, 232, 3, 0, 0, 0, 0, 0, 0, 4, 109, 101, 111, 119, 37, 81, 1, 188,
+            2, 0, 0, 0, 0, 0, 0, 3, 101, 97, 116,
+        ];
+        let actual = dst.get_ref();
+
+        assert_eq!(&expected, actual);
+        //std::fs::write("./dbg.txt", format!("{dst:?}")).unwrap();
+    }
+
+    #[test]
+    fn test_converter_csv_to_txt_success() {
+        let mut src = Cursor::new(
+            r#"date,kind,amount,category
+            2026-11-15,income,1000,meow
+            2026-11-16,expence,700,eat
+            "#,
+        );
+        let txs = get_reader(TxFormat::Csv).read(&mut src).unwrap();
+
+        let mut dst = Cursor::new(Vec::<u8>::new());
+        get_writer(TxFormat::Txt).write(&mut dst, &txs).unwrap();
+
+        let expected: Vec<u8> = b"2026-11-15;meow;income;1000\n2026-11-16;eat;expence;700\n".into();
+        let actual = dst.get_ref();
+
+        assert_eq!(&expected, actual);
+    }
+}

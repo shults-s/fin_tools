@@ -10,7 +10,7 @@ pub enum TxKind {
 }
 
 /// Represents transaction.
-#[derive(Debug, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct Tx {
     date: NaiveDate,
     cat: String,
@@ -19,7 +19,7 @@ pub struct Tx {
 }
 
 /// Represents result of comparison of two transaction lists.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TxsCmpRes {
     /// Transaction lists completely identical.
     Equals,
@@ -98,5 +98,91 @@ fn find_diff_field(tx1: &Tx, tx2: &Tx) -> String {
         format!("Amount: {} != {}", tx1.get_amount(), tx2.get_amount())
     } else {
         panic!("Values of the unknown field differ.");
+    }
+}
+
+mod tests {
+    use crate::format::{TxFormat, get_reader, get_writer};
+    use crate::model::{Tx, TxKind, TxsCmpRes, compare_txs};
+    use chrono::NaiveDate;
+
+    #[test]
+    fn test_comparer_equals() {
+        let txs1 = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                1000,
+            ),
+        ];
+        let txs2 = txs1.clone();
+
+        assert_eq!(TxsCmpRes::Equals, compare_txs(&txs1, &txs2));
+    }
+
+    #[test]
+    fn test_comparer_count_mismatch() {
+        let txs1 = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                1000,
+            ),
+        ];
+        let txs2 = txs1.iter().skip(1).cloned().collect::<Vec<_>>();
+
+        assert_eq!(TxsCmpRes::CountMismatch, compare_txs(&txs1, &txs2));
+    }
+
+    #[test]
+    fn test_comparer_different() {
+        let txs1 = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                1000,
+            ),
+        ];
+
+        let txs2 = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                2300,
+            ),
+        ];
+
+        assert!(matches!(
+            compare_txs(&txs1, &txs2),
+            TxsCmpRes::Different(1, _)
+        ));
     }
 }

@@ -183,3 +183,45 @@ impl TxWriter for BinTxWriter {
         Ok(())
     }
 }
+
+mod tests {
+    use crate::error::FinToolsError;
+    use crate::format::{BinTxReader, TxReader};
+    use crate::model::{Tx, TxKind};
+    use chrono::NaiveDate;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_bin_format_reader_success() {
+        let mut src = Cursor::new([
+            70, 84, 1, 37, 81, 1, 188, 2, 0, 0, 0, 0, 0, 0, 3, 101, 97, 116, 36, 81, 0, 232, 3, 0,
+            0, 0, 0, 0, 0, 4, 109, 101, 111, 119,
+        ]);
+        let expected = vec![
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
+                "eat".into(),
+                TxKind::Expence,
+                700,
+            ),
+            Tx::new(
+                NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
+                "meow".into(),
+                TxKind::Income,
+                1000,
+            ),
+        ];
+        let actual = BinTxReader.read(&mut src).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_bin_format_reader_missing_signature_failure() {
+        let mut src = Cursor::new([
+            37, 81, 1, 188, 2, 0, 0, 0, 0, 0, 0, 3, 101, 97, 116, 36, 81, 0, 232, 3, 0, 0, 0, 0, 0,
+            0, 4, 109, 101, 111, 119,
+        ]);
+        let actual = BinTxReader.read(&mut src).unwrap_err();
+        assert!(matches!(actual, FinToolsError::ParsingError(_)));
+    }
+}
