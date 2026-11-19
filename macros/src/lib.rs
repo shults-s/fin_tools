@@ -3,6 +3,8 @@ use quote::{format_ident, quote};
 use syn::Data::Struct;
 use syn::{DeriveInput, Error, Fields, parse_macro_input};
 
+/// Implements get methods for all of struct's fields.
+/// Applicable for structs with named fields only.
 #[proc_macro_derive(Getters)]
 pub fn derive_getters(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use macros::Getters;
 use std::fmt::Display;
 
-/// Represents type of transaction.
+/// Represents kind of transaction.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TxKind {
     Income,
@@ -18,7 +18,7 @@ pub struct Tx {
     amount: u64,
 }
 
-/// Represents result of comparison of two sets of transactions.
+/// Represents result of comparison of two transaction lists.
 #[derive(Debug)]
 pub enum TxsCmpRes {
     /// Transaction lists completely identical.
@@ -43,8 +43,8 @@ impl Display for TxKind {
 }
 
 impl Tx {
-    /// Creates a new transaction.
-    /// Panics if args are violate domain constraints:
+    /// Creates an instance of `Tx`.\
+    /// Panics when provided args are violate domain constraints:
     /// - `cat` is empty or is not an ASCII string;
     /// - `amount` is zero.
     pub fn new(date: NaiveDate, cat: String, kind: TxKind, amount: u64) -> Self {

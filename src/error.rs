@@ -3,8 +3,13 @@ use std::{error::Error, fmt::Display};
 /// Represents `fin_tools` library error variants.
 #[derive(Debug)]
 pub enum FinToolsError {
+    /// Represents an I/O error which occurred while reading or writing transactions list.
     IoError(std::io::Error),
+
+    /// Represents an error which occurred while deserializing transactions list.
     ParsingError(String),
+
+    /// Represents an error which occurred while serializing transactions list.
     SerializingError(String),
 }
 
@@ -41,7 +46,7 @@ impl From<std::io::Error> for FinToolsError {
     }
 }
 
-/// Creates instance of `FinToolsError::ParsingError` from literal or format args.
+/// Creates an instance of `FinToolsError::ParsingError` from literal or format args.
 macro_rules! parsing_err {
     ($msg:literal) => {
         FinToolsError::ParsingError($msg.into())
@@ -52,7 +57,7 @@ macro_rules! parsing_err {
     }
 }
 
-/// Creates instance of `FinToolsError::SerializingError` from literal or format args.
+/// Creates an instance of `FinToolsError::SerializingError` from literal or format args.
 macro_rules! serializing_err {
     ($msg:literal) => {
         FinToolsError::SerializingError($msg.into())

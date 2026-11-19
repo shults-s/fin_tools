@@ -11,7 +11,7 @@ mod csv_format;
 mod txt_format;
 mod utils;
 
-// FOR_REVIEWER: `None` only when date is out of range which is violation of an invariant.
+// FOR_REVIEWER: `None` only when date is out of range, which is violation of an invariant.
 type Days = u16;
 const MAX_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MAX as i32).unwrap();
 const MIN_DATE: NaiveDate = NaiveDate::from_epoch_days(Days::MIN as i32).unwrap();
@@ -25,7 +25,8 @@ pub enum TxFormat {
     Txt,
 }
 
-/// Determines transaction format from format's short name.
+/// Gets transaction format from format's short name. Param `str` assumed lowercased.\
+/// Returns `None` when no format corresponds to provided name.
 pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
     match str.as_ref() {
         "ftx" => Some(TxFormat::Bin),
@@ -45,7 +46,8 @@ pub trait TxWriter {
     fn write(&self, dst: &mut dyn Write, txs: &Vec<Tx>) -> Result<(), FinToolsError>;
 }
 
-/// Transaction reader factory.
+/// Transaction reader factory.\
+/// Returns an instance of a transactions list reader for provided format.
 pub fn get_reader(format: TxFormat) -> Box<dyn TxReader> {
     // FOR_REVIEWER: using dynamic dispatching there feels like over-engineering, although...
     // I would appreciate some advice.
@@ -56,7 +58,8 @@ pub fn get_reader(format: TxFormat) -> Box<dyn TxReader> {
     }
 }
 
-/// Transaction writer factory.
+/// Transaction writer factory.\
+/// Returns an instance of a transactions list writer for provided format.
 pub fn get_writer(format: TxFormat) -> Box<dyn TxWriter> {
     match format {
         TxFormat::Bin => Box::new(BinTxWriter),

@@ -14,8 +14,6 @@ When reviewing my solution, I ask for the **harshest criticism**. Point out what
 
 In this task, I've mixed various syntactic constructs, simply to explore different ways of implementing similar things (`&[impl AsRef<str>]` and `impl IntoIterator<Item: AsRef<str>>`, `&str` and `AsRef<str>`, etc.). As a result, the code as a whole might look a bit inconsistent.
 
-And yeah, *London is a capital of Great Britain*, that's why there are very few articles in my comments. I get really mixed up with them.
-
 ## Fast check
 
 ```bash

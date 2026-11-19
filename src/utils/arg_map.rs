@@ -3,12 +3,16 @@ use std::collections::{HashMap, hash_map::Entry};
 pub type ArgKey = String;
 pub type ArgVal = Option<String>;
 
+/// Represents command-line arguments key-value storage.
 pub struct ArgMap {
     arg_map: HashMap<ArgKey, ArgVal>,
 }
 
 impl ArgMap {
-    /// Parses a sequence of command-line arguments into a key-value map.
+    /// Creates an instance of `ArgMap` from a sequence of command-line arguments.\
+    /// Returns error when found:
+    /// - repeated args with same key,
+    /// - args not leading with double hyphen.
     pub fn from(args: impl IntoIterator<Item: AsRef<str>>) -> Result<Self, String> {
         let mut arg_map = HashMap::new();
 
@@ -28,7 +32,10 @@ impl ArgMap {
         Ok(Self { arg_map })
     }
 
-    /// Returns a value of required arg.
+    /// Gets a value of required arg.\
+    /// Returns error when:
+    /// - arg with specified key does not exists,
+    /// - value for arg is not set.
     pub fn get_required(&self, key: &str) -> Result<&str, String> {
         let Some(val) = self
             .arg_map
@@ -40,12 +47,17 @@ impl ArgMap {
         Ok(val)
     }
 
-    /// Returns a value of arg if arg with specified key exists.
+    /// Gets a value of arg if arg with specified key exists.\
+    /// Returns `None` when:
+    /// - arg with specified key does not exists,
+    /// - value for arg is not set.
     pub fn get_arg(&self, key: &str) -> Option<&str> {
         self.arg_map.get(key)?.as_deref()
     }
 
-    /// Checks whether an flag-arg with specified key exists. Flag-arg has no value.
+    /// Checks whether an flag-arg with specified key exists. Flag-arg has no value.\
+    /// Returns `true` when arg with specified key exists and it's value is **not**
+    /// set, otherwise, `false`.
     pub fn check_flag_arg(&self, key: &str) -> bool {
         let Some(val) = self.arg_map.get(key) else {
             return false;
@@ -53,7 +65,9 @@ impl ArgMap {
         val.is_none()
     }
 
-    /// Checks whether an value-arg with specified key exists.
+    /// Checks whether an value-arg with specified key exists.\
+    /// Returns `true` when arg with specified key exists and it's value is set,
+    /// otherwise, `false`.
     pub fn check_val_arg(&self, key: &str) -> bool {
         let Some(val) = self.arg_map.get(key) else {
             return false;
