@@ -1,10 +1,5 @@
-mod error;
-mod format;
-mod model;
-mod utils;
-
-use crate::format::{get_format, get_reader, get_writer};
-use crate::utils::{ArgMap, get_format_from_path, get_path_checked};
+use fin_tools::format::{get_format, get_reader, get_writer};
+use fin_tools::utils::{ArgMap, get_format_from_path, get_path_checked};
 use std::error::Error;
 use std::fs::File;
 use std::io::{stdin, stdout};
