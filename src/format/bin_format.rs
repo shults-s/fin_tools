@@ -1,8 +1,9 @@
-use crate::error::{FinToolsError, parsing_err, serializing_err};
+use crate::error::{FinToolsError, parsing_err, serializing_err, validation_err};
 use crate::format::{CAT_MAX_SIZE, Days, MAX_DATE, MIN_DATE, TxReader, TxWriter};
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
 use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::num::NonZeroU64;
 
 pub(super) struct BinTxReader;
 pub(super) struct BinTxWriter;
@@ -51,7 +52,9 @@ impl TxReader for BinTxReader {
         let mut reader = BufReader::new(src);
 
         let mut sig = [0u8; SIG_SIZE];
-        reader.read_exact(&mut sig)?;
+        reader
+            .read_exact(&mut sig)
+            .map_err(FinToolsError::ReadError)?;
 
         if sig[..2].as_ref() != FIXED_SIG_BYTES {
             return Err(parsing_err!("Bad FTX signature bytes."));
@@ -72,11 +75,13 @@ impl TxReader for BinTxReader {
             if let Err(e) = reader.read_exact(&mut entry_buf[..1]) {
                 match e.kind() {
                     ErrorKind::UnexpectedEof => break,
-                    _ => return Err(e.into()),
+                    _ => return Err(FinToolsError::WriteError(e)),
                 }
             }
 
-            reader.read_exact(&mut entry_buf[1..])?;
+            reader
+                .read_exact(&mut entry_buf[1..])
+                .map_err(FinToolsError::ReadError)?;
 
             let [d0, d1, kind, a0, a1, a2, a3, a4, a5, a6, a7, l] = entry_buf;
 
@@ -99,13 +104,13 @@ impl TxReader for BinTxReader {
             })?;
 
             let amount = u64::from_le_bytes([a0, a1, a2, a3, a4, a5, a6, a7]);
-            if amount == 0 {
+            let Some(amount) = NonZeroU64::new(amount) else {
                 return Err(parsing_err!(
                     "Invalid transaction amount '{}' for TX with offset {}. Value must not be zero.",
                     amount,
                     offset,
                 ));
-            }
+            };
 
             let cat_len = l as usize;
             if cat_len == 0 {
@@ -115,7 +120,9 @@ impl TxReader for BinTxReader {
                 ));
             }
 
-            reader.read_exact(&mut cat_buf[..cat_len])?;
+            reader
+                .read_exact(&mut cat_buf[..cat_len])
+                .map_err(FinToolsError::ReadError)?;
             let cat_bytes = (&cat_buf[..cat_len]).iter().copied().collect::<Vec<_>>();
             let cat = match String::from_utf8(cat_bytes) {
                 Ok(str) => str,
@@ -131,7 +138,16 @@ impl TxReader for BinTxReader {
 
             offset += ENTRY_SIZE + cat_len;
 
-            txs.push(Tx::new(date, cat, kind, amount));
+            match Tx::try_new(date, cat, kind, amount) {
+                Ok(tx) => txs.push(tx),
+                Err(err) => {
+                    return Err(validation_err!(
+                        "Invalid transaction field for TX with offset {}. {}",
+                        offset,
+                        err
+                    ));
+                }
+            };
         }
 
         Ok(txs)
@@ -142,7 +158,9 @@ impl TxWriter for BinTxWriter {
     fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
         let mut writer = BufWriter::new(dst);
 
-        writer.write_all(SIG_BYTES)?;
+        writer
+            .write_all(SIG_BYTES)
+            .map_err(FinToolsError::WriteError)?;
 
         for (idx, tx) in txs.iter().enumerate() {
             let tx_num = idx + 1;
@@ -159,15 +177,17 @@ impl TxWriter for BinTxWriter {
             }
 
             let days = (date.to_epoch_days() as u16).to_le_bytes();
-            writer.write_all(&days)?;
+            writer.write_all(&days).map_err(FinToolsError::WriteError)?;
 
             let kind = get_byte_from_kind(*tx.get_kind()).to_le_bytes();
-            writer.write_all(&kind)?;
+            writer.write_all(&kind).map_err(FinToolsError::WriteError)?;
 
-            let amount = tx.get_amount().to_le_bytes();
-            writer.write_all(&amount)?;
+            let amount = tx.get_amount().get().to_le_bytes();
+            writer
+                .write_all(&amount)
+                .map_err(FinToolsError::WriteError)?;
 
-            let cat = tx.get_cat();
+            let cat = tx.get_cat().as_str();
             let l = cat.len();
             if cat.len() > CAT_MAX_SIZE {
                 return Err(serializing_err!(
@@ -179,11 +199,11 @@ impl TxWriter for BinTxWriter {
             }
             let l = (l as u8).to_le_bytes();
             let cat = cat.as_bytes();
-            writer.write_all(&l)?;
-            writer.write_all(&cat)?;
+            writer.write_all(&l).map_err(FinToolsError::WriteError)?;
+            writer.write_all(&cat).map_err(FinToolsError::WriteError)?;
         }
 
-        writer.flush()?;
+        writer.flush().map_err(FinToolsError::WriteError)?;
         Ok(())
     }
 }
@@ -195,6 +215,7 @@ mod tests {
     use crate::model::{Tx, TxKind};
     use chrono::NaiveDate;
     use std::io::Cursor;
+    use std::num::NonZeroU64;
 
     #[test]
     fn test_bin_format_reader_success() {
@@ -203,18 +224,20 @@ mod tests {
             0, 0, 0, 0, 0, 4, 109, 101, 111, 119,
         ]);
         let expected = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                1000,
-            ),
+                NonZeroU64::new(1000).unwrap(),
+            )
+            .unwrap(),
         ];
         let actual = BinTxReader.read(&mut src).unwrap();
         assert_eq!(expected, actual);

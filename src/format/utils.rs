@@ -1,8 +1,9 @@
-use crate::error::{FinToolsError, parsing_err};
+use crate::error::{FinToolsError, parsing_err, validation_err};
 use crate::format::DATE_FMT_STR;
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
 use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::num::NonZeroU64;
 
 const COLUMNS_NUM: usize = 4;
 const DEFAULT_COLUMNS: [&str; COLUMNS_NUM] = ["date", "category", "kind", "amount"];
@@ -39,7 +40,7 @@ pub(super) fn write_txs_as_text(
 
     if add_header {
         let header = DEFAULT_COLUMNS.join(field_sep);
-        writeln!(writer, "{header}")?;
+        writeln!(writer, "{header}").map_err(FinToolsError::WriteError)?;
     }
 
     for tx in txs {
@@ -51,10 +52,11 @@ pub(super) fn write_txs_as_text(
             tx.get_cat(),
             get_str_from_kind(tx.get_kind()),
             tx.get_amount()
-        )?;
+        )
+        .map_err(FinToolsError::WriteError)?;
     }
 
-    writer.flush()?;
+    writer.flush().map_err(FinToolsError::WriteError)?;
     Ok(())
 }
 
@@ -71,7 +73,8 @@ pub(super) fn read_txs_from_text(
         // FOR_REVIEWER: I don't like this stupid allocations, but I didn't come up
         // with a more idiomatic way to read header on-demand.
         // I would appreciate some advice.
-        header?
+        header
+            .map_err(FinToolsError::ReadError)?
             .split(field_sep)
             .map(|column| column.trim().to_ascii_lowercase())
             .collect::<Vec<_>>()
@@ -91,7 +94,7 @@ pub(super) fn read_txs_from_text(
     for line in lines {
         line_num += 1;
 
-        let line = line?;
+        let line = line.map_err(FinToolsError::ReadError)?;
         if line.trim().is_empty() {
             continue;
         }
@@ -129,13 +132,13 @@ pub(super) fn read_txs_from_text(
                 line_num
             )
         })?;
-        if amount == 0 {
+        let Some(amount) = NonZeroU64::new(amount) else {
             return Err(parsing_err!(
                 "Invalid transaction amount '{}' at line {}. Value must not be zero.",
                 amount,
-                line_num
+                line_num,
             ));
-        }
+        };
 
         let cat = fields[cat_idx].to_string();
         if !cat.is_ascii() || cat.len() == 0 {
@@ -146,7 +149,16 @@ pub(super) fn read_txs_from_text(
             ));
         }
 
-        txs.push(Tx::new(date, cat, kind, amount));
+        match Tx::try_new(date, cat, kind, amount) {
+            Ok(tx) => txs.push(tx),
+            Err(err) => {
+                return Err(validation_err!(
+                    "Invalid transaction field at line {}. {}",
+                    line_num,
+                    err
+                ));
+            }
+        };
     }
 
     Ok(txs)

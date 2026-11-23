@@ -1,6 +1,7 @@
+use crate::error::{FinToolsError, validation_err};
 use chrono::NaiveDate;
 use macros::Getters;
-use std::fmt::Display;
+use std::{fmt::Display, num::NonZeroU64};
 
 /// Represents kind of transaction.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -9,13 +10,17 @@ pub enum TxKind {
     Expence,
 }
 
+/// Represents transaction category.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxCat(String);
+
 /// Represents transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct Tx {
     date: NaiveDate,
-    cat: String,
+    cat: TxCat,
     kind: TxKind,
-    amount: u64,
+    amount: NonZeroU64,
 }
 
 /// Represents result of comparison of two transaction lists.
@@ -42,27 +47,48 @@ impl Display for TxKind {
     }
 }
 
-impl Tx {
-    /// Creates an instance of `Tx`.\
-    /// Panics when provided args are violate domain constraints:
-    /// - `cat` is empty or is not an ASCII string;
-    /// - `amount` is zero.
-    pub fn new(date: NaiveDate, cat: String, kind: TxKind, amount: u64) -> Self {
+impl Display for TxCat {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl TxCat {
+    /// Creates an instance of `TxCat`.\
+    /// Returns an error when `cat` is empty or is not an ASCII string.
+    pub fn try_new(cat: String) -> Result<Self, FinToolsError> {
         if !cat.is_ascii() {
-            panic!("Transaction category must be an ASCII string.");
+            return Err(validation_err!(
+                "Transaction category must be an ASCII string."
+            ));
         }
         if cat.is_empty() {
-            panic!("Transaction category can't be empty.");
+            return Err(validation_err!("Transaction category can't be empty."));
         }
-        if amount == 0 {
-            panic!("Transaction amount must be positive.");
-        }
-        Self {
+        Ok(Self { 0: cat })
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Tx {
+    /// Creates an instance of `Tx`.\
+    /// Returns an error when `TxCat` cannot be constructed from `cat`.
+    pub fn try_new(
+        date: NaiveDate,
+        cat: String,
+        kind: TxKind,
+        amount: NonZeroU64,
+    ) -> Result<Self, FinToolsError> {
+        let cat = TxCat::try_new(cat)?;
+        Ok(Self {
             date,
-            cat: cat.to_ascii_lowercase(),
+            cat,
             kind,
             amount,
-        }
+        })
     }
 }
 
@@ -103,24 +129,28 @@ fn find_diff_field(tx1: &Tx, tx2: &Tx) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::num::NonZeroU64;
+
     use crate::model::{Tx, TxKind, TxsCmpRes, compare_txs};
     use chrono::NaiveDate;
 
     #[test]
     fn test_comparer_equals() {
         let txs1 = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                1000,
-            ),
+                NonZeroU64::new(1000).unwrap(),
+            )
+            .unwrap(),
         ];
         let txs2 = txs1.clone();
 
@@ -130,18 +160,20 @@ mod tests {
     #[test]
     fn test_comparer_count_mismatch() {
         let txs1 = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                1000,
-            ),
+                NonZeroU64::new(1000).unwrap(),
+            )
+            .unwrap(),
         ];
         let txs2 = txs1.iter().skip(1).cloned().collect::<Vec<_>>();
 
@@ -151,33 +183,37 @@ mod tests {
     #[test]
     fn test_comparer_different() {
         let txs1 = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                1000,
-            ),
+                NonZeroU64::new(1000).unwrap(),
+            )
+            .unwrap(),
         ];
 
         let txs2 = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                2300,
-            ),
+                NonZeroU64::new(2300).unwrap(),
+            )
+            .unwrap(),
         ];
 
         assert!(matches!(

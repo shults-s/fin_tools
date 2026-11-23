@@ -27,6 +27,7 @@ mod tests {
     use crate::model::{Tx, TxKind};
     use chrono::NaiveDate;
     use std::io::Cursor;
+    use std::num::NonZeroU64;
 
     #[test]
     fn test_txt_format_reader_success() {
@@ -36,18 +37,20 @@ mod tests {
             "#,
         );
         let expected = vec![
-            Tx::new(
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
                 TxKind::Expence,
-                700,
-            ),
-            Tx::new(
+                NonZeroU64::new(700).unwrap(),
+            )
+            .unwrap(),
+            Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 15).unwrap(),
                 "meow".into(),
                 TxKind::Income,
-                1000,
-            ),
+                NonZeroU64::new(1000).unwrap(),
+            )
+            .unwrap(),
         ];
         let actual = TxtTxReader.read(&mut src).unwrap();
         assert_eq!(expected, actual);
