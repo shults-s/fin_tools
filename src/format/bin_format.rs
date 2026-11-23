@@ -126,7 +126,13 @@ impl TxReader for BinTxReader {
             let cat_bytes = (&cat_buf[..cat_len]).iter().copied().collect::<Vec<_>>();
             let cat = match String::from_utf8(cat_bytes) {
                 Ok(str) => str,
-                Err(err) => return Err(parsing_err!("{}", err)),
+                Err(err) => {
+                    return Err(parsing_err!(
+                        "Invalid transaction category len for TX with offset {}. {}",
+                        offset,
+                        err
+                    ));
+                }
             };
             if !cat.is_ascii() {
                 return Err(parsing_err!(

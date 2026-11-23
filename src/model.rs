@@ -75,7 +75,7 @@ impl TxCat {
 
 impl Tx {
     /// Creates an instance of `Tx`.\
-    /// Returns an error when `TxCat` cannot be constructed from `cat`.
+    /// Returns an error when `TxCat` can't be constructed from `cat`.
     pub fn try_new(
         date: NaiveDate,
         cat: String,
