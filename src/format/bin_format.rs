@@ -2,7 +2,7 @@ use crate::error::{FinToolsError, parsing_err, serializing_err};
 use crate::format::{CAT_MAX_SIZE, Days, MAX_DATE, MIN_DATE, TxReader, TxWriter};
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
-use std::io::{BufReader, BufWriter, Read, Write};
+use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
 
 pub(super) struct BinTxReader;
 pub(super) struct BinTxWriter;
@@ -59,7 +59,7 @@ impl TxReader for BinTxReader {
 
         if sig[2] != VERSION {
             return Err(parsing_err!(
-                "Unsupported FTX version. Expected <= {}, found {}.",
+                "Unsupported FTX version. Expected = {}, found {}.",
                 VERSION,
                 sig[2]
             ));
@@ -69,18 +69,18 @@ impl TxReader for BinTxReader {
         let mut cat_buf = [0u8; CAT_MAX_SIZE];
         let mut offset = SIG_SIZE;
         loop {
-            let readed = reader.read(&mut entry_buf)?;
-            if readed == 0 {
-                break; // EOF
+            if let Err(e) = reader.read_exact(&mut entry_buf[..1]) {
+                match e.kind() {
+                    ErrorKind::UnexpectedEof => break,
+                    _ => return Err(e.into()),
+                }
             }
 
-            if readed < ENTRY_SIZE {
-                return Err(parsing_err!("Unexpected end of data."));
-            }
+            reader.read_exact(&mut entry_buf[1..])?;
 
-            // FOR_REVIEWER: Here and throughout, inability to read values from a slice
-            // is considered as a violation of an invariant (fucked idxs).
-            let days = Days::from_le_bytes(entry_buf[..=1].try_into().unwrap());
+            let [d0, d1, kind, a0, a1, a2, a3, a4, a5, a6, a7, l] = entry_buf;
+
+            let days = Days::from_le_bytes([d0, d1]);
             let date = NaiveDate::from_epoch_days(days as i32).ok_or_else(|| {
                 parsing_err!(
                     "Invalid transaction date '{}' for TX with offset {}. Value is out of range 0..={}.",
@@ -90,15 +90,15 @@ impl TxReader for BinTxReader {
                 )
             })?;
 
-            let kind = get_kind_from_byte(entry_buf[2]).ok_or_else(|| {
+            let kind = get_kind_from_byte(kind).ok_or_else(|| {
                 parsing_err!(
                     "Invalid transaction kind '{}' for TX with offset {}.",
-                    entry_buf[2],
+                    kind,
                     offset
                 )
             })?;
 
-            let amount = u64::from_le_bytes(entry_buf[3..=10].try_into().unwrap());
+            let amount = u64::from_le_bytes([a0, a1, a2, a3, a4, a5, a6, a7]);
             if amount == 0 {
                 return Err(parsing_err!(
                     "Invalid transaction amount '{}' for TX with offset {}. Value must not be zero.",
@@ -107,7 +107,7 @@ impl TxReader for BinTxReader {
                 ));
             }
 
-            let cat_len = entry_buf[11] as usize;
+            let cat_len = l as usize;
             if cat_len == 0 {
                 return Err(parsing_err!(
                     "Invalid transaction category len for TX with offset {}. Value must not be zero.",
@@ -116,7 +116,11 @@ impl TxReader for BinTxReader {
             }
 
             reader.read_exact(&mut cat_buf[..cat_len])?;
-            let cat = String::from_utf8_lossy(&cat_buf[..cat_len]).to_string();
+            let cat_bytes = (&cat_buf[..cat_len]).iter().copied().collect::<Vec<_>>();
+            let cat = match String::from_utf8(cat_bytes) {
+                Ok(str) => str,
+                Err(err) => return Err(parsing_err!("{}", err)),
+            };
             if !cat.is_ascii() {
                 return Err(parsing_err!(
                     "Invalid transaction category '{}' for TX with offset {}. Expected ASCII string.",
@@ -138,7 +142,7 @@ impl TxWriter for BinTxWriter {
     fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
         let mut writer = BufWriter::new(dst);
 
-        writer.write(SIG_BYTES)?;
+        writer.write_all(SIG_BYTES)?;
 
         for (idx, tx) in txs.iter().enumerate() {
             let tx_num = idx + 1;
@@ -155,13 +159,13 @@ impl TxWriter for BinTxWriter {
             }
 
             let days = (date.to_epoch_days() as u16).to_le_bytes();
-            writer.write(&days)?;
+            writer.write_all(&days)?;
 
             let kind = get_byte_from_kind(*tx.get_kind()).to_le_bytes();
-            writer.write(&kind)?;
+            writer.write_all(&kind)?;
 
             let amount = tx.get_amount().to_le_bytes();
-            writer.write(&amount)?;
+            writer.write_all(&amount)?;
 
             let cat = tx.get_cat();
             let l = cat.len();
@@ -175,8 +179,8 @@ impl TxWriter for BinTxWriter {
             }
             let l = (l as u8).to_le_bytes();
             let cat = cat.as_bytes();
-            writer.write(&l)?;
-            writer.write(&cat)?;
+            writer.write_all(&l)?;
+            writer.write_all(&cat)?;
         }
 
         writer.flush()?;
