@@ -40,7 +40,7 @@ mod tests {
             Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
-                TxKind::Expence,
+                TxKind::Expense,
                 NonZeroU64::new(700).unwrap(),
             )
             .unwrap(),

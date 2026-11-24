@@ -33,7 +33,7 @@ const ENTRY_SIZE: usize = 12;
 fn get_kind_from_byte(byte: u8) -> Option<TxKind> {
     match byte {
         0u8 => Some(TxKind::Income),
-        1u8 => Some(TxKind::Expence),
+        1u8 => Some(TxKind::Expense),
         _ => None,
     }
 }
@@ -233,7 +233,7 @@ mod tests {
             Tx::try_new(
                 NaiveDate::from_ymd_opt(2026, 11, 16).unwrap(),
                 "eat".into(),
-                TxKind::Expence,
+                TxKind::Expense,
                 NonZeroU64::new(700).unwrap(),
             )
             .unwrap(),

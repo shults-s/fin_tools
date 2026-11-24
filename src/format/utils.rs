@@ -20,7 +20,7 @@ fn get_column_idx(col_name: &str, columns: &[impl AsRef<str>]) -> Result<usize, 
 fn get_kind_from_str(str: &str) -> Option<TxKind> {
     match str.to_ascii_lowercase().as_str() {
         "income" => Some(TxKind::Income),
-        "expence" => Some(TxKind::Expence),
+        "expence" => Some(TxKind::Expense),
         _ => None,
     }
 }
