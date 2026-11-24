@@ -32,7 +32,7 @@ fn get_str_from_kind(kind: &TxKind) -> String {
 
 pub(super) fn write_txs_as_text(
     dst: &mut dyn std::io::Write,
-    txs: &Vec<Tx>,
+    txs: &[Tx],
     add_header: bool,
     field_sep: &str,
 ) -> Result<(), FinToolsError> {

@@ -161,7 +161,7 @@ impl TxReader for BinTxReader {
 }
 
 impl TxWriter for BinTxWriter {
-    fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
+    fn write(&self, dst: &mut dyn std::io::Write, txs: &[Tx]) -> Result<(), FinToolsError> {
         let mut writer = BufWriter::new(dst);
 
         writer

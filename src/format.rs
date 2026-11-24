@@ -49,8 +49,8 @@ pub trait TxReader {
 
 /// Represents abstract transactions writer.
 pub trait TxWriter {
-    fn write(&self, dst: &mut dyn Write, txs: &Vec<Tx>) -> Result<(), FinToolsError>;
     /// Writes collections list to `dst` via BufWriter.
+    fn write(&self, dst: &mut dyn Write, txs: &[Tx]) -> Result<(), FinToolsError>;
 }
 
 /// Transaction reader factory.\

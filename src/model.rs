@@ -97,7 +97,7 @@ impl Tx {
 
 /// Compares two lists of transactions.
 /// Size of lists and order of items matter.
-pub fn compare_txs(txs1: &Vec<Tx>, txs2: &Vec<Tx>) -> TxsCmpRes {
+pub fn compare_txs(txs1: &[Tx], txs2: &[Tx]) -> TxsCmpRes {
     if txs1.len() != txs2.len() {
         return TxsCmpRes::CountMismatch;
     }

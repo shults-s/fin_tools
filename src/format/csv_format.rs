@@ -15,7 +15,7 @@ impl TxReader for CsvTxReader {
 }
 
 impl TxWriter for CsvTxWriter {
-    fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
+    fn write(&self, dst: &mut dyn std::io::Write, txs: &[Tx]) -> Result<(), FinToolsError> {
         write_txs_as_text(dst, txs, true, FIELD_SEP)
     }
 }

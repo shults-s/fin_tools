@@ -15,7 +15,7 @@ impl TxReader for TxtTxReader {
 }
 
 impl TxWriter for TxtTxWriter {
-    fn write(&self, dst: &mut dyn std::io::Write, txs: &Vec<Tx>) -> Result<(), FinToolsError> {
+    fn write(&self, dst: &mut dyn std::io::Write, txs: &[Tx]) -> Result<(), FinToolsError> {
         write_txs_as_text(dst, txs, false, FIELD_SEP)
     }
 }

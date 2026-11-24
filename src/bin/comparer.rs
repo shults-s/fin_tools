@@ -1,25 +1,36 @@
 use fin_tools::format::get_reader;
 use fin_tools::model::{TxsCmpRes, compare_txs};
-use fin_tools::utils::{ArgMap, get_format_from_path, get_path_checked};
+use fin_tools::utils::{ArgMap, get_format_from_path};
 use std::error::Error;
 use std::fs::File;
+use std::path::PathBuf;
+use std::process::ExitCode;
 
 const USAGE_STR: &str = r#"Usage: comparer --txs1="<file_path>" --txs2="<file_path>"
 Format will inferred from file extension: ftx, csv or txt."#;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> ExitCode {
+    match comparer() {
+        Ok(_) => ExitCode::SUCCESS,
+        Err(err) => {
+            eprintln!("{err}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn comparer() -> Result<(), Box<dyn Error>> {
     let args = std::env::args();
     if args.len() != 3 {
-        println!("{USAGE_STR}");
-        return Ok(());
+        return Err(format!("{USAGE_STR}").into());
     }
 
     let arg_map = ArgMap::from(args)?;
-    let path1 = arg_map.get_required("txs1").and_then(get_path_checked)?;
-    let path2 = arg_map.get_required("txs2").and_then(get_path_checked)?;
+    let path1 = arg_map.get_required("txs1").map(PathBuf::from)?;
+    let path2 = arg_map.get_required("txs2").map(PathBuf::from)?;
 
-    let fmt1 = get_format_from_path(path1)?;
-    let fmt2 = get_format_from_path(path2)?;
+    let fmt1 = get_format_from_path(&path1)?;
+    let fmt2 = get_format_from_path(&path2)?;
 
     let mut file1 = File::open(path1)?;
     let mut file2 = File::open(path2)?;
