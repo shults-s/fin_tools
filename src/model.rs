@@ -6,8 +6,11 @@ use std::{fmt::Display, num::NonZeroU64};
 /// Represents kind of transaction.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TxKind {
+    /// Represents an inflow of funds.
     Income,
-    Expence,
+
+    /// Represents an outflow of funds.
+    Expense,
 }
 
 /// Represents transaction category.

@@ -1,7 +1,9 @@
 use std::collections::{HashMap, hash_map::Entry};
 
+/// Represents command-line argument key.
 pub type ArgKey = String;
-pub type ArgVal = Option<String>;
+
+type ArgVal = Option<String>;
 
 /// Represents command-line arguments key-value storage.
 pub struct ArgMap {

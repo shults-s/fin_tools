@@ -20,8 +20,13 @@ const CAT_MAX_SIZE: usize = u8::MAX as usize;
 
 /// Represents formats, available for reading & writing transactions.
 pub enum TxFormat {
+    /// Represents binary format.
     Bin,
+
+    /// Represents CSV format.
     Csv,
+
+    /// Represents structured text format.
     Txt,
 }
 
@@ -38,12 +43,14 @@ pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
 
 /// Represents abstract transactions reader.
 pub trait TxReader {
+    /// Reads collections list from `src` via BufReader until EOF is reached.
     fn read(&self, src: &mut dyn Read) -> Result<Vec<Tx>, FinToolsError>;
 }
 
 /// Represents abstract transactions writer.
 pub trait TxWriter {
     fn write(&self, dst: &mut dyn Write, txs: &Vec<Tx>) -> Result<(), FinToolsError>;
+    /// Writes collections list to `dst` via BufWriter.
 }
 
 /// Transaction reader factory.\
