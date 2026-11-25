@@ -10,3 +10,4 @@ path = "src/main.rs"
 [dependencies]
 macros = { path = "macros" }
 chrono = "0.4.45"
+regex = "1.13.2"

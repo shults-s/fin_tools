@@ -1,6 +1,7 @@
 use crate::error::{FinToolsError, validation_err};
 use chrono::NaiveDate;
 use macros::Getters;
+use regex::regex;
 use std::{fmt::Display, num::NonZeroU64};
 
 /// Represents kind of transaction.
@@ -68,9 +69,15 @@ impl TxCat {
         if cat.is_empty() {
             return Err(validation_err!("Transaction category can't be empty."));
         }
-        Ok(Self { 0: cat })
+        if !regex!(r"^[a-z0-9\-_]+$").is_match(&cat) {
+            return Err(validation_err!(
+                "Transaction category may only contain characters a-z, 0-9, -, _."
+            ));
+        }
+        Ok(Self(cat))
     }
 
+    /// Extracts a string slice containing entire category name.
     pub fn as_str(&self) -> &str {
         &self.0
     }
