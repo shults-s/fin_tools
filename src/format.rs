@@ -65,6 +65,16 @@ pub fn get_reader(format: TxFormat) -> Box<dyn TxReader> {
     }
 }
 
+/// Static dispatch version of reader, demo purposes only.
+#[allow(unused)]
+fn read_txs(format: TxFormat, src: &mut impl BufRead) -> Result<Vec<Tx>, FinToolsError> {
+    match format {
+        TxFormat::Bin => BinTxReader.read(src),
+        TxFormat::Csv => CsvTxReader.read(src),
+        TxFormat::Txt => TxtTxReader.read(src),
+    }
+}
+
 /// Transaction writer factory.\
 /// Returns an instance of a transactions list writer for provided format.
 pub fn get_writer(format: TxFormat) -> Box<dyn TxWriter> {

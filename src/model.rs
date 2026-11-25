@@ -59,13 +59,9 @@ impl Display for TxCat {
 
 impl TxCat {
     /// Creates an instance of `TxCat`.\
-    /// Returns an error when `cat` is empty or is not an ASCII string.
+    /// Returns an error when `cat` is empty or contains chars other than
+    /// `a-z`, `0-9`, `-`, `_`.
     pub fn try_new(cat: String) -> Result<Self, FinToolsError> {
-        if !cat.is_ascii() {
-            return Err(validation_err!(
-                "Transaction category must be an ASCII string."
-            ));
-        }
         if cat.is_empty() {
             return Err(validation_err!("Transaction category can't be empty."));
         }

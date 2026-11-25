@@ -37,14 +37,15 @@ cargo run --bin comparer -- --txs1="./data/test.csv" --txs2="./data/test.ftx"
 ## Domain
 
 Each transaction is defined by:
+
 - `Date` of completion;
 - `Kind` of transaction, a value from a fixed set: "Income", "Expence";
 - `Amount` of transferred monies, always greater than zero;
-- `Category` of transaction, arbitary non empty text value.
+- `Category` of transaction, arbitary non empty value which may only contain characters `a-z`, `0-9`, `-`, `_`.
 
 ### Constraints
 
-All of text data must be ASCII strings, since I don't want to struggle with Unicode Normalization Forms and other pitfalls during subsequent string comparison.
+All of text data is treated as lowercased ASCII strings, since I don't want to struggle with Unicode Normalization Forms and other pitfalls during subsequent string comparison.
 
 ## I/O data layouts
 
@@ -57,8 +58,8 @@ All of text data must be ASCII strings, since I don't want to struggle with Unic
   - format version for further migrations.
 
 | Bytes |  0  |  1  |    2    |
-|:-----:|:---:|:---:|:-------:|
-|  Type |  u8 |  u8 |    u8   |
+| :---: | :-: | :-: | :-----: |
+| Type  | u8  | u8  |   u8    |
 | Field | 'F' | 'T' | Version |
 
 #### Entry (transaction)
@@ -72,10 +73,10 @@ All of multi-byte integer values are Little Endian.
 - `Category`, name of transaction category, max length is 255 characters;
   - should be enum also, but I want to demonstrate processing of variable-length data.
 
-| Bytes | 0..=1 |   2  | 3..=10 | 11 |   13..l  |
-|:-----:|:-----:|:----:|:------:|:--:|:--------:|
-|  Type |  u16  |  u8  |   u64  | u8 |   &str   |
-| Field |  Date | Kind | Amount |  l | Category |
+| Bytes | 0..=1 |  2   | 3..=10 | 11  |  13..l   |
+| :---: | :---: | :--: | :----: | :-: | :------: |
+| Type  |  u16  |  u8  |  u64   | u8  |   &str   |
+| Field | Date  | Kind | Amount |  l  | Category |
 
 ### CSV format
 
