@@ -1,3 +1,5 @@
+//! Contains CLI application for comparing transaction lists.
+
 use fin_tools::format::get_reader;
 use fin_tools::model::{TxsCmpRes, compare_txs};
 use fin_tools::utils::{ArgMap, get_format_from_path};

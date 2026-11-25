@@ -1,3 +1,7 @@
+#![warn(missing_docs)]
+
+//! Contains procedural macros for implementing field getters of structs.
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::Data::Struct;
@@ -32,7 +36,9 @@ pub fn derive_getters(input: TokenStream) -> TokenStream {
 
     let methods = fields.iter().map(|(field_name, field_ty)| {
         let getter_name = format_ident!("get_{}", field_name);
+        let doc_str = format!("Gets a reference to value of field `{}`.", field_name);
         quote! {
+            #[doc = #doc_str]
             #[inline]
             pub fn #getter_name(&self) -> &#field_ty {
                 &self.#field_name

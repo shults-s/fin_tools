@@ -1,3 +1,5 @@
+//! Contains CLI application for converting transaction list formats.
+
 use fin_tools::format::{TxFormat, get_format, get_reader, get_writer};
 use fin_tools::utils::{ArgMap, get_format_from_path};
 use std::error::Error;
