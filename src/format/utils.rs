@@ -1,19 +1,16 @@
-use crate::error::{FinToolsError, parsing_err, validation_err};
+use crate::error::{FinToolsError, parsing_err};
 use crate::format::DATE_FMT_STR;
 use crate::model::{Tx, TxKind};
 use chrono::NaiveDate;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, Write};
 use std::num::NonZeroU64;
 
 const COLUMNS_NUM: usize = 4;
 const DEFAULT_COLUMNS: [&str; COLUMNS_NUM] = ["date", "category", "kind", "amount"];
 
 #[inline]
-fn get_column_idx(col_name: &str, columns: &[impl AsRef<str>]) -> Result<usize, FinToolsError> {
-    columns
-        .into_iter()
-        .position(|col| col.as_ref() == col_name)
-        .ok_or_else(|| parsing_err!("Column '{}' not found.", col_name))
+fn get_column_idx(idx: usize, column_idxs: &[Option<usize>]) -> Result<usize, FinToolsError> {
+    column_idxs[idx].ok_or_else(|| parsing_err!("Column '{}' not found.", DEFAULT_COLUMNS[idx]))
 }
 
 #[inline]
@@ -31,21 +28,19 @@ fn get_str_from_kind(kind: &TxKind) -> String {
 }
 
 pub(super) fn write_txs_as_text(
-    dst: &mut dyn std::io::Write,
+    dst: &mut dyn Write,
     txs: &[Tx],
     add_header: bool,
     field_sep: &str,
 ) -> Result<(), FinToolsError> {
-    let mut writer = BufWriter::new(dst);
-
     if add_header {
         let header = DEFAULT_COLUMNS.join(field_sep);
-        writeln!(writer, "{header}").map_err(FinToolsError::WriteError)?;
+        writeln!(dst, "{header}").map_err(FinToolsError::WriteError)?;
     }
 
     for tx in txs {
         writeln!(
-            writer,
+            dst,
             "{1}{0}{2}{0}{3}{0}{4}",
             field_sep,
             tx.get_date().format(DATE_FMT_STR),
@@ -56,39 +51,40 @@ pub(super) fn write_txs_as_text(
         .map_err(FinToolsError::WriteError)?;
     }
 
-    writer.flush().map_err(FinToolsError::WriteError)?;
+    dst.flush().map_err(FinToolsError::WriteError)?;
     Ok(())
 }
 
 pub(super) fn read_txs_from_text(
-    src: &mut dyn std::io::Read,
+    src: &mut dyn BufRead,
     has_header: bool,
     field_sep: &str,
 ) -> Result<Vec<Tx>, FinToolsError> {
     let mut txs = vec![];
 
-    let mut lines = BufReader::new(src).lines();
+    let mut lines = src.lines();
 
-    let columns = if has_header && let Some(header) = lines.next() {
-        // FOR_REVIEWER: I don't like this stupid allocations, but I didn't come up
-        // with a more idiomatic way to read header on-demand.
-        // I would appreciate some advice.
-        header
-            .map_err(FinToolsError::ReadError)?
-            .split(field_sep)
-            .map(|column| column.trim().to_ascii_lowercase())
-            .collect::<Vec<_>>()
+    let mut column_idxs: [Option<usize>; COLUMNS_NUM] = [None; COLUMNS_NUM];
+    if has_header && let Some(header) = lines.next() {
+        let header = header.map_err(FinToolsError::ReadError)?;
+        for (col_idx, col_name) in header.split(field_sep).enumerate() {
+            if let Some(idx) = DEFAULT_COLUMNS
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case(col_name))
+            {
+                column_idxs[idx] = Some(col_idx);
+            }
+        }
     } else {
-        DEFAULT_COLUMNS
-            .iter()
-            .map(|column| column.to_string())
-            .collect::<Vec<_>>()
-    };
+        for (idx, val) in column_idxs.iter_mut().enumerate() {
+            *val = Some(idx);
+        }
+    }
 
-    let date_idx = get_column_idx("date", &columns)?;
-    let cat_idx = get_column_idx("category", &columns)?;
-    let kind_idx = get_column_idx("kind", &columns)?;
-    let amount_idx = get_column_idx("amount", &columns)?;
+    let date_idx = get_column_idx(0, &column_idxs)?;
+    let cat_idx = get_column_idx(1, &column_idxs)?;
+    let kind_idx = get_column_idx(2, &column_idxs)?;
+    let amount_idx = get_column_idx(3, &column_idxs)?;
 
     let mut line_num = if has_header { 1 } else { 0 };
     for line in lines {
@@ -141,7 +137,7 @@ pub(super) fn read_txs_from_text(
         };
 
         let cat = fields[cat_idx].to_string();
-        if !cat.is_ascii() || cat.len() == 0 {
+        if !cat.is_ascii() || cat.is_empty() {
             return Err(parsing_err!(
                 "Invalid transaction category '{}' at line {}. Expected non empty ASCII string.",
                 cat,
@@ -152,7 +148,7 @@ pub(super) fn read_txs_from_text(
         match Tx::try_new(date, cat, kind, amount) {
             Ok(tx) => txs.push(tx),
             Err(err) => {
-                return Err(validation_err!(
+                return Err(parsing_err!(
                     "Invalid transaction field at line {}. {}",
                     line_num,
                     err

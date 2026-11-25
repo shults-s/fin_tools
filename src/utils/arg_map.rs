@@ -85,7 +85,7 @@ impl ArgMap {
         if !key.starts_with("--") {
             return Err(format!(
                 "Invalid arg key '{}'. Any arg must starts with double hyphen.",
-                &key
+                key
             ));
         }
 

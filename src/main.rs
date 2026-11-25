@@ -4,17 +4,17 @@ use fin_tools::format::{TxFormat, get_format, get_reader, get_writer};
 use fin_tools::utils::{ArgMap, get_format_from_path};
 use std::error::Error;
 use std::fs::File;
-use std::io::{Write, stdin, stdout};
-use std::path::PathBuf;
+use std::io::{BufReader, Write, stdin, stdout};
+use std::path::Path;
 use std::process::ExitCode;
 
-enum Src {
-    File(PathBuf, TxFormat),
+enum Src<'a> {
+    File(&'a Path, TxFormat),
     StdIn(TxFormat),
 }
 
-enum Dst {
-    File(PathBuf, TxFormat),
+enum Dst<'a> {
+    File(&'a Path, TxFormat),
     StdOut(TxFormat),
 }
 
@@ -37,7 +37,7 @@ fn main() -> ExitCode {
 fn converter() -> Result<(), Box<dyn Error>> {
     let args = std::env::args();
     if args.len() != 3 {
-        return Err(format!("{USAGE_STR}").into());
+        return Err(USAGE_STR.to_string().into());
     }
 
     let arg_map = ArgMap::from(args)?;
@@ -45,8 +45,8 @@ fn converter() -> Result<(), Box<dyn Error>> {
     let src = if let Some(src_path) = arg_map.get_arg("src")
         && !arg_map.check_val_arg("stdin")
     {
-        let path = PathBuf::from(src_path);
-        let format = get_format_from_path(&path)?;
+        let path = Path::new(src_path);
+        let format = get_format_from_path(path)?;
         Src::File(path, format)
     } else if let Some(format) = arg_map.get_arg("stdin") {
         let format = get_format(format).ok_or_else(|| format!("Unsupported format '{format}'."))?;
@@ -58,8 +58,8 @@ fn converter() -> Result<(), Box<dyn Error>> {
     let dst = if let Some(dst_path) = arg_map.get_arg("dst")
         && !arg_map.check_val_arg("stdout")
     {
-        let path = PathBuf::from(dst_path);
-        let format = get_format_from_path(&path)?;
+        let path = Path::new(dst_path);
+        let format = get_format_from_path(path)?;
         Dst::File(path, format)
     } else if let Some(format) = arg_map.get_arg("stdout") {
         let format = get_format(format).ok_or_else(|| format!("Unsupported format '{format}'."))?;
@@ -70,8 +70,8 @@ fn converter() -> Result<(), Box<dyn Error>> {
 
     let txs = match src {
         Src::File(path, format) => {
-            let mut src = File::open(path)?;
-            get_reader(format).read(&mut src)
+            let src = File::open(path)?;
+            get_reader(format).read(&mut BufReader::new(src))
         }
         Src::StdIn(format) => {
             let mut src = stdin().lock();

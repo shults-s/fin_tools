@@ -4,7 +4,7 @@ use crate::format::csv_format::{CsvTxReader, CsvTxWriter};
 use crate::format::txt_format::{TxtTxReader, TxtTxWriter};
 use crate::model::Tx;
 use chrono::NaiveDate;
-use std::io::{Read, Write};
+use std::io::{BufRead, Write};
 
 mod bin_format;
 mod csv_format;
@@ -43,13 +43,13 @@ pub fn get_format(str: impl AsRef<str>) -> Option<TxFormat> {
 
 /// Represents abstract transactions reader.
 pub trait TxReader {
-    /// Reads collections list from `src` via BufReader until EOF is reached.
-    fn read(&self, src: &mut dyn Read) -> Result<Vec<Tx>, FinToolsError>;
+    /// Reads collections list from `src` until EOF is reached.
+    fn read(&self, src: &mut dyn BufRead) -> Result<Vec<Tx>, FinToolsError>;
 }
 
 /// Represents abstract transactions writer.
 pub trait TxWriter {
-    /// Writes collections list to `dst` via BufWriter.
+    /// Writes collections list to `dst`.
     fn write(&self, dst: &mut dyn Write, txs: &[Tx]) -> Result<(), FinToolsError>;
 }
 

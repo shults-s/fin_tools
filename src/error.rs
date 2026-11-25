@@ -72,7 +72,7 @@ impl Display for FinToolsError {
                 write!(f, "Failed to serialize transactions. {reason}")
             }
             FinToolsError::ValidationError(reason) => {
-                write!(f, "Failed to validate transaction fields. {reason}")
+                write!(f, "{reason}")
             }
         }
     }
